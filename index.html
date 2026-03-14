@@ -11,7 +11,74 @@
   body { font-family: 'Hiragino Maru Gothic Pro', 'Rounded Mplus 1c', sans-serif; overscroll-behavior: none; }
   @keyframes slideDown { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.08); } }
-  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  /* ── APOMO用スタイル ── */
+  .apomo-root {
+    font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100dvh;
+    padding: 24px 16px 32px;
+    color: #222;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+  .apomo-root .app-header { text-align: center; margin-bottom: 28px; }
+  .apomo-root .app-title { font-size: 18px; font-weight: 700; letter-spacing: 0.02em; color: #222; }
+  .apomo-root .timer-wrapper { position: relative; width: 260px; height: 260px; margin-bottom: 28px; }
+  .apomo-root .timer-svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .apomo-root .timer-bg-circle { fill: none; stroke: #f0f0f0; stroke-width: 8; }
+  .apomo-root .timer-progress-circle { fill: none; stroke-width: 8; stroke-linecap: round; transition: stroke 0.4s ease; }
+  .apomo-root .timer-header { display: flex; flex-direction: column; align-items: center; gap: 6px; margin-bottom: 12px; }
+  .apomo-root .timer-display { font-size: 52px; font-weight: 700; letter-spacing: 0.02em; line-height: 1; font-variant-numeric: tabular-nums; color: #222; }
+  .apomo-root .timer-status { font-size: 13px; font-weight: 600; padding: 4px 14px; border-radius: 20px; letter-spacing: 0.04em; transition: background 0.4s, color 0.4s; }
+  .apomo-root .timer-center { position: absolute; inset: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; border-radius: 50%; cursor: pointer; background: transparent; transition: transform 0.1s, background 0.25s; overflow: hidden; }
+  .apomo-root .timer-center:active { transform: scale(0.93); }
+  .apomo-root .timer-center .shindoi-emoji { font-size: 52px; line-height: 1; }
+  .apomo-root .timer-center .shindoi-label { font-size: 14px; font-weight: 700; color: #D04040; letter-spacing: 0.05em; }
+  .apomo-root .status-standby, .apomo-root .status-idling, .apomo-root .status-choice, .apomo-root .status-working { background: #FFF0E0; color: #FF7A00; }
+  .apomo-root .status-break { background: #E8F4FD; color: #4EA8DE; }
+  .apomo-root .controls { display: flex; align-items: center; gap: 28px; margin-bottom: 20px; }
+  .apomo-root .btn-main { width: 64px; height: 64px; border-radius: 50%; border: none; background: #FF7A00; color: #fff; font-size: 26px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 16px rgba(255,122,0,0.4); transition: transform 0.1s, box-shadow 0.1s; }
+  .apomo-root .btn-main:active { transform: scale(0.92); box-shadow: 0 2px 8px rgba(255,122,0,0.3); }
+  .apomo-root .btn-main.break-mode { background: #4EA8DE; box-shadow: 0 4px 16px rgba(78,168,222,0.4); }
+  .apomo-root .btn-icon { width: 44px; height: 44px; border-radius: 50%; border: none; background: transparent; color: #888; font-size: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: color 0.15s, transform 0.1s; }
+  .apomo-root .btn-icon:hover { color: #444; }
+  .apomo-root .btn-icon:active { transform: scale(0.9); }
+  .apomo-root .btn-icon:disabled { opacity: 0.3; cursor: default; }
+  .apomo-root .description-area { width: 100%; max-width: 320px; min-height: 72px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; margin-bottom: 16px; position: relative; }
+  .apomo-root .description-text { font-size: 13px; color: #555; line-height: 1.7; }
+  .apomo-root .icon-decoration { position: absolute; bottom: 0; right: 4px; font-size: 28px; opacity: 0.65; }
+  .apomo-root .choice-panel { width: 100%; max-width: 320px; display: none; gap: 10px; margin-top: 4px; }
+  .apomo-root .choice-panel.visible { display: flex; }
+  .apomo-root .btn-choice { flex: 1; border: none; border-radius: 12px; padding: 14px 10px; cursor: pointer; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; transition: transform 0.1s, opacity 0.15s; }
+  .apomo-root .btn-choice:active { transform: scale(0.97); }
+  .apomo-root .btn-choice.continue { background: #FF7A00; color: #fff; }
+  .apomo-root .btn-choice.rest { background: #FFF0E0; color: #FF7A00; border: 1.5px solid #FFD0A0; }
+  .apomo-root .choice-icon { font-size: 18px; }
+  .apomo-root .choice-label { font-size: 15px; font-weight: 700; }
+  .apomo-root .choice-desc { font-size: 11px; opacity: 0.85; line-height: 1.4; }
+  @keyframes pulse-ring { 0% { opacity: 0.5; r: 112; } 50% { opacity: 0.15; r: 118; } 100% { opacity: 0.5; r: 112; } }
+  .apomo-root .pulse-circle { fill: none; stroke: #FF7A00; stroke-width: 3; opacity: 0; animation: none; }
+  .apomo-root .pulse-circle.active { opacity: 0.4; animation: pulse-ring 2.2s ease-in-out infinite; }
+  .apomo-root .session-stats { margin-top: 20px; text-align: center; font-size: 12px; color: #bbb; }
+  .apomo-root .session-stats span { color: #FF7A00; font-weight: 600; }
+  .apomo-root .shindoi-section { width: 100%; max-width: 320px; margin-bottom: 14px; }
+  .apomo-root .shindoi-gauge-wrap { display: flex; flex-direction: column; gap: 5px; }
+  .apomo-root .shindoi-gauge-bg { height: 20px; background: #f0f0f0; border-radius: 12px; overflow: hidden; }
+  .apomo-root .shindoi-gauge-fill { height: 100%; width: 0%; border-radius: 12px; background: #4EA8DE; transition: width 0.15s ease, background 0.3s ease; }
+  .apomo-root .shindoi-meta { display: flex; justify-content: space-between; align-items: center; font-size: 11px; }
+  .apomo-root .shindoi-count-text { color: #ccc; }
+  .apomo-root .shindoi-explosion-badge { color: #FF3B30; font-weight: 700; font-size: 12px; }
+  @keyframes gauge-shake { 0%,100%{transform:translateX(0) rotate(0deg)} 20%{transform:translateX(-5px) rotate(-1.5deg)} 40%{transform:translateX(5px) rotate(1.5deg)} 60%{transform:translateX(-4px) rotate(-1deg)} 80%{transform:translateX(4px) rotate(1deg)} }
+  .apomo-root .shindoi-gauge-wrap.shaking { animation: gauge-shake 0.35s ease-in-out infinite; }
+  @keyframes gauge-explode { 0%{transform:scale(1,1)} 20%{transform:scale(1.06,1.5)} 45%{transform:scale(0.97,1.1)} 65%{transform:scale(1.03,1.25)} 85%{transform:scale(0.99,1.0)} 100%{transform:scale(1,1)} }
+  .apomo-root .shindoi-gauge-wrap.exploding { animation: gauge-explode 0.5s ease-out forwards; }
+  @keyframes confetti-fall { 0%{transform:translateY(-10px) rotate(0deg) scale(1);opacity:1} 80%{opacity:1} 100%{transform:translateY(105vh) rotate(720deg) scale(0.5);opacity:0} }
+  .confetti-piece { position: fixed; top: -15px; border-radius: 3px; animation: confetti-fall linear forwards; z-index: 9999; pointer-events: none; }
+  .apomo-root .btn-back-home { background: linear-gradient(135deg,#ffb3c8,#ff9eb5); border: none; border-radius: 20px; padding: 8px 18px; font-size: 13px; font-weight: 700; color: white; cursor: pointer; margin-top: 16px; }
 </style>
 </head>
 <body>
@@ -24,36 +91,11 @@
 <script type="text/babel">
 const { useState, useEffect, useRef, useCallback } = React;
 
-// ─── 定数 ───────────────────────────────────────────
-const APPS = [
-  { id: "sns",     label: "SNS",     emoji: "\u{1F4AC}", color: "linear-gradient(135deg, #222 40%, #4caf50)", textColor: "white" },
-  { id: "firefox", label: "Firefox", emoji: "\u{1F98A}", color: "#f4956a" },
-];
-const MODES = [
-  { id: "study",   label: "\u52C9\u5F37",       color: "#b5e8a0", character: "\u{1F338}", screen: "pomodoro" },
-  { id: "chill",   label: "\u30C1\u30EB\u30BF\u30A4\u30E0", color: "#f0d6f5", character: "\u{1F343}", screen: "timer" },
-  { id: "commute", label: "\u79FB\u52D5\u4E2D",     color: "#fff3b0", character: "\u{1F695}", screen: "timer" },
-  { id: "sleep",   label: "\u7761\u7720",       color: "#d9d6f5", character: "\u{1F634}", screen: "timer" },
-];
-const TRACK_ITEMS = [
-  { id: "sns",      label: "SNS",              color: "#5abf7a" },
-  { id: "firefox",  label: "Firefox",          color: "#f4956a" },
-  { id: "study",    label: "\u52C9\u5F37",     color: "#7ec870" },
-  { id: "chill",    label: "\u30C1\u30EB\u30BF\u30A4\u30E0", color: "#c88ae0" },
-  { id: "commute",  label: "\u79FB\u52D5\u4E2D",   color: "#f5d060" },
-  { id: "sleep",    label: "\u7761\u7720",      color: "#9090d8" },
-  { id: "interval", label: "\u30A4\u30F3\u30BF\u30FC\u30D0\u30EB", color: "#b0c8e8" },
-];
-const STORAGE_KEYS = { sns: "memo_posts_sns", firefox: "memo_posts_firefox" };
-const USAGE_TODAY_KEY  = "usage_today";
-const USAGE_HISTORY_KEY = "usage_history";
-
 // ─── Wake Lock ヘルパー ─────────────────────────────
 async function acquireWakeLock() {
   try {
     if ('wakeLock' in navigator) {
-      const lock = await navigator.wakeLock.request('screen');
-      return lock;
+      return await navigator.wakeLock.request('screen');
     }
   } catch (e) {
     console.log('Wake Lock not acquired:', e.message);
@@ -63,22 +105,17 @@ async function acquireWakeLock() {
 
 async function releaseWakeLock(lockRef) {
   try {
-    if (lockRef) {
-      await lockRef.release();
-    }
+    if (lockRef) await lockRef.release();
   } catch (e) {
     console.log('Wake Lock release failed:', e.message);
   }
 }
 
-// Wake Lock を管理するカスタムフック
 function useWakeLock(active) {
   const lockRef = useRef(null);
-
   useEffect(() => {
     if (active) {
       acquireWakeLock().then(lock => { lockRef.current = lock; });
-      // visibilitychange で再取得（タブ復帰時）
       const handleVisibility = async () => {
         if (active && document.visibilityState === 'visible') {
           lockRef.current = await acquireWakeLock();
@@ -95,34 +132,31 @@ function useWakeLock(active) {
       lockRef.current = null;
     }
   }, [active]);
-
-  return lockRef;
 }
 
-// ─── 通知音ヘルパー ─────────────────────────────────
-function playNotificationSound() {
-  try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const playTone = (freq, startTime, duration) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.frequency.value = freq;
-      osc.type = 'sine';
-      gain.gain.setValueAtTime(0.3, startTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
-      osc.start(startTime);
-      osc.stop(startTime + duration);
-    };
-    const now = ctx.currentTime;
-    playTone(880, now, 0.15);
-    playTone(1100, now + 0.18, 0.15);
-    playTone(1320, now + 0.36, 0.25);
-  } catch (e) {
-    console.log('Audio not available:', e.message);
-  }
-}
+// ─── 定数 ───────────────────────────────────────────
+const APPS = [
+  { id: "sns",     label: "SNS",     emoji: "💬", color: "linear-gradient(135deg, #222 40%, #4caf50)", textColor: "white" },
+  { id: "firefox", label: "Firefox", emoji: "🦊", color: "#f4956a" },
+];
+const MODES = [
+  { id: "study",   label: "勉強",       color: "#b5e8a0", character: "🌸", screen: "pomodoro" },
+  { id: "chill",   label: "チルタイム", color: "#f0d6f5", character: "🍃", screen: "timer" },
+  { id: "commute", label: "移動中",     color: "#fff3b0", character: "🚕", screen: "timer" },
+  { id: "sleep",   label: "睡眠",       color: "#d9d6f5", character: "😴", screen: "timer" },
+];
+const TRACK_ITEMS = [
+  { id: "sns",      label: "SNS",         color: "#5abf7a" },
+  { id: "firefox",  label: "Firefox",     color: "#f4956a" },
+  { id: "study",    label: "勉強",        color: "#7ec870" },
+  { id: "chill",    label: "チルタイム",  color: "#c88ae0" },
+  { id: "commute",  label: "移動中",      color: "#f5d060" },
+  { id: "sleep",    label: "睡眠",        color: "#9090d8" },
+  { id: "interval", label: "インターバル", color: "#b0c8e8" },
+];
+const STORAGE_KEYS = { sns: "memo_posts_sns", firefox: "memo_posts_firefox" };
+const USAGE_TODAY_KEY  = "usage_today";
+const USAGE_HISTORY_KEY = "usage_history";
 
 // ─── ユーティリティ ───────────────────────────────────
 const todayStr = () => new Date().toLocaleDateString("ja-JP", { year:"numeric", month:"2-digit", day:"2-digit" }).replace(/\//g,"-");
@@ -160,7 +194,7 @@ function fmtSec(s) {
   return `${sec}s`;
 }
 
-// ─── ミニバーチャート（ホーム用） ────────────────────
+// ─── ミニバーチャート ────────────────────────────────
 function MiniStackBar({ todayUsage }) {
   const total = TRACK_ITEMS.reduce((s, t) => s + (todayUsage[t.id] || 0), 0);
   if (total === 0) return <div style={{ height: 12, background: "#eee", borderRadius: 6 }} />;
@@ -197,23 +231,19 @@ function MiniHistoryBars({ history }) {
   );
 }
 
-// ─── 使用量カード（ホーム） ───────────────────────────
+// ─── 使用量カード ────────────────────────────────────
 function UsageCard({ type, todayUsage, history, onClick }) {
   return (
     <div onClick={onClick} style={{
       background: "linear-gradient(135deg, #e8f4ff 0%, #d4e8ff 100%)",
       borderRadius: 20, padding: "12px 16px", flex: 1,
       boxShadow: "0 4px 12px rgba(140,180,255,0.2)",
-      border: "2px solid rgba(255,255,255,0.8)",
-      cursor: "pointer",
+      border: "2px solid rgba(255,255,255,0.8)", cursor: "pointer",
     }}>
       <div style={{ fontSize: 12, fontWeight: 700, color: "#5577cc", marginBottom: 8 }}>
-        {type === "today" ? "\u4ECA\u65E5\u306E\u4F7F\u7528\u91CF" : "\u4ECA\u307E\u3067\u306E\u4F7F\u7528\u91CF"}
+        {type === "today" ? "今日の使用量" : "今までの使用量"}
       </div>
-      {type === "today"
-        ? <MiniStackBar todayUsage={todayUsage} />
-        : <MiniHistoryBars history={history} />
-      }
+      {type === "today" ? <MiniStackBar todayUsage={todayUsage} /> : <MiniHistoryBars history={history} />}
     </div>
   );
 }
@@ -225,14 +255,14 @@ function TodayUsageScreen({ todayUsage, onBack }) {
   return (
     <div style={{ minHeight: "100vh", background: "linear-gradient(160deg, #e8f4ff 0%, #f0e8ff 100%)", fontFamily: "'Hiragino Maru Gothic Pro', sans-serif", maxWidth: 400, margin: "0 auto" }}>
       <div style={{ padding: "16px 16px 12px", background: "rgba(255,255,255,0.75)", backdropFilter: "blur(10px)", borderBottom: "1px solid rgba(200,200,255,0.3)", display: "flex", alignItems: "center", gap: 12, position: "sticky", top: 0, zIndex: 10 }}>
-        <button onClick={onBack} style={{ background: "linear-gradient(135deg, #ffb3c8, #ff9eb5)", border: "none", borderRadius: 20, padding: "6px 14px", fontSize: 12, fontWeight: 700, color: "white", cursor: "pointer" }}>{"\u{1F3E0}"} \u623B\u308B</button>
-        <div style={{ fontSize: 16, fontWeight: 800, color: "#5566cc" }}>{"\u{1F4CA}"} \u4ECA\u65E5\u306E\u4F7F\u7528\u91CF</div>
-        <div style={{ marginLeft: "auto", fontSize: 11, color: "#aaa" }}>\u5408\u8A08 {fmtSec(total)}</div>
+        <button onClick={onBack} style={{ background: "linear-gradient(135deg, #ffb3c8, #ff9eb5)", border: "none", borderRadius: 20, padding: "6px 14px", fontSize: 12, fontWeight: 700, color: "white", cursor: "pointer" }}>🏠 戻る</button>
+        <div style={{ fontSize: 16, fontWeight: 800, color: "#5566cc" }}>📊 今日の使用量</div>
+        <div style={{ marginLeft: "auto", fontSize: 11, color: "#aaa" }}>合計 {fmtSec(total)}</div>
       </div>
       <div style={{ padding: "20px 16px", display: "flex", flexDirection: "column", gap: 14 }}>
         {total > 0 && (
           <div style={{ background: "white", borderRadius: 16, padding: "12px 16px", boxShadow: "0 2px 10px rgba(140,160,255,0.12)" }}>
-            <div style={{ fontSize: 12, color: "#aaa", marginBottom: 8 }}>\u5185\u8A33</div>
+            <div style={{ fontSize: 12, color: "#aaa", marginBottom: 8 }}>内訳</div>
             <div style={{ display: "flex", height: 16, borderRadius: 8, overflow: "hidden" }}>
               {TRACK_ITEMS.map(t => {
                 const pct = ((todayUsage[t.id] || 0) / total) * 100;
@@ -259,8 +289,8 @@ function TodayUsageScreen({ todayUsage, onBack }) {
         })}
         {total === 0 && (
           <div style={{ textAlign: "center", color: "#ccc", marginTop: 40, fontSize: 14 }}>
-            <div style={{ fontSize: 40, marginBottom: 8 }}>{"\u{1F338}"}</div>
-            \u307E\u3060\u8A18\u9332\u304C\u306A\u3044\u3088\uFF01
+            <div style={{ fontSize: 40, marginBottom: 8 }}>🌸</div>
+            まだ記録がないよ！
           </div>
         )}
       </div>
@@ -274,9 +304,9 @@ function HistoryUsageScreen({ history, onBack }) {
   return (
     <div style={{ minHeight: "100vh", background: "linear-gradient(160deg, #e8f4ff 0%, #f0e8ff 100%)", fontFamily: "'Hiragino Maru Gothic Pro', sans-serif", maxWidth: 400, margin: "0 auto" }}>
       <div style={{ padding: "16px 16px 12px", background: "rgba(255,255,255,0.75)", backdropFilter: "blur(10px)", borderBottom: "1px solid rgba(200,200,255,0.3)", display: "flex", alignItems: "center", gap: 12, position: "sticky", top: 0, zIndex: 10 }}>
-        <button onClick={onBack} style={{ background: "linear-gradient(135deg, #ffb3c8, #ff9eb5)", border: "none", borderRadius: 20, padding: "6px 14px", fontSize: 12, fontWeight: 700, color: "white", cursor: "pointer" }}>{"\u{1F3E0}"} \u623B\u308B</button>
-        <div style={{ fontSize: 16, fontWeight: 800, color: "#5566cc" }}>{"\u{1F4C8}"} \u4ECA\u307E\u3067\u306E\u4F7F\u7528\u91CF</div>
-        <div style={{ marginLeft: "auto", fontSize: 11, color: "#aaa" }}>{allDays.length}\u65E5\u5206</div>
+        <button onClick={onBack} style={{ background: "linear-gradient(135deg, #ffb3c8, #ff9eb5)", border: "none", borderRadius: 20, padding: "6px 14px", fontSize: 12, fontWeight: 700, color: "white", cursor: "pointer" }}>🏠 戻る</button>
+        <div style={{ fontSize: 16, fontWeight: 800, color: "#5566cc" }}>📈 今までの使用量</div>
+        <div style={{ marginLeft: "auto", fontSize: 11, color: "#aaa" }}>{allDays.length}日分</div>
       </div>
       <div style={{ padding: "12px 16px 4px", display: "flex", flexWrap: "wrap", gap: 8 }}>
         {TRACK_ITEMS.map(t => (
@@ -289,8 +319,8 @@ function HistoryUsageScreen({ history, onBack }) {
       <div style={{ padding: "8px 16px 32px", display: "flex", flexDirection: "column", gap: 10 }}>
         {allDays.length === 0 && (
           <div style={{ textAlign: "center", color: "#ccc", marginTop: 40, fontSize: 14 }}>
-            <div style={{ fontSize: 40, marginBottom: 8 }}>{"\u{1F4C5}"}</div>
-            \u307E\u3060\u8A18\u9332\u304C\u306A\u3044\u3088\uFF01
+            <div style={{ fontSize: 40, marginBottom: 8 }}>📅</div>
+            まだ記録がないよ！
           </div>
         )}
         {allDays.map(d => {
@@ -299,7 +329,7 @@ function HistoryUsageScreen({ history, onBack }) {
             <div key={d.date} style={{ background: "white", borderRadius: 16, padding: "12px 16px", boxShadow: "0 2px 10px rgba(140,160,255,0.1)", border: "2px solid rgba(220,230,255,0.5)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
                 <span style={{ fontSize: 13, fontWeight: 700, color: "#555" }}>{d.date}</span>
-                <span style={{ fontSize: 12, color: "#aaa" }}>\u5408\u8A08 {fmtSec(total)}</span>
+                <span style={{ fontSize: 12, color: "#aaa" }}>合計 {fmtSec(total)}</span>
               </div>
               {total > 0 ? (
                 <div style={{ display: "flex", height: 18, borderRadius: 8, overflow: "hidden" }}>
@@ -344,25 +374,25 @@ function MemoScreen({ app, onBack }) {
   return (
     <div style={{ minHeight:"100vh", background:"linear-gradient(160deg,#f0f0ff 0%,#fff0f8 100%)", fontFamily:"'Hiragino Maru Gothic Pro',sans-serif", display:"flex", flexDirection:"column", maxWidth:400, margin:"0 auto" }}>
       <div style={{ padding:"16px 16px 12px", background:"rgba(255,255,255,0.75)", backdropFilter:"blur(10px)", borderBottom:"1px solid rgba(200,200,255,0.3)", display:"flex", alignItems:"center", gap:12, position:"sticky", top:0, zIndex:10 }}>
-        <button onClick={onBack} style={{ background:"linear-gradient(135deg,#ffb3c8,#ff9eb5)", border:"none", borderRadius:20, padding:"6px 14px", fontSize:12, fontWeight:700, color:"white", cursor:"pointer" }}>{"\u{1F3E0}"} \u623B\u308B</button>
-        <div style={{ fontSize:16, fontWeight:800, color:"#5566cc" }}>{app.emoji} {app.label} \u30E1\u30E2</div>
-        <div style={{ marginLeft:"auto", fontSize:11, color:"#aaa" }}>{posts.length}\u4EF6</div>
+        <button onClick={onBack} style={{ background:"linear-gradient(135deg,#ffb3c8,#ff9eb5)", border:"none", borderRadius:20, padding:"6px 14px", fontSize:12, fontWeight:700, color:"white", cursor:"pointer" }}>🏠 戻る</button>
+        <div style={{ fontSize:16, fontWeight:800, color:"#5566cc" }}>{app.emoji} {app.label} メモ</div>
+        <div style={{ marginLeft:"auto", fontSize:11, color:"#aaa" }}>{posts.length}件</div>
       </div>
       <div style={{ padding:"12px 16px", background:"rgba(255,255,255,0.8)", backdropFilter:"blur(10px)", borderBottom:"1px solid rgba(200,200,255,0.3)", display:"flex", gap:8 }}>
         <textarea value={input} onChange={e=>setInput(e.target.value)}
           onKeyDown={e=>{ if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();post();} }}
-          placeholder="\u3044\u307E\u306A\u306B\u3057\u3066\u308B\uFF1F" rows={2}
+          placeholder="いまなにしてる？" rows={2}
           style={{ flex:1, borderRadius:16, border:"2px solid rgba(180,200,255,0.6)", padding:"10px 14px", fontSize:14, fontFamily:"'Hiragino Maru Gothic Pro',sans-serif", resize:"none", outline:"none", background:"rgba(240,245,255,0.8)", color:"#333", lineHeight:1.5 }} />
-        <button onClick={post} style={{ background:"linear-gradient(135deg,#a0c4ff,#7eb0ff)", border:"none", borderRadius:16, padding:"0 18px", fontSize:20, cursor:"pointer", color:"white" }}>{"\u2191"}</button>
+        <button onClick={post} style={{ background:"linear-gradient(135deg,#a0c4ff,#7eb0ff)", border:"none", borderRadius:16, padding:"0 18px", fontSize:20, cursor:"pointer", color:"white" }}>↑</button>
       </div>
       <div style={{ flex:1, overflowY:"auto", padding:"12px 16px", display:"flex", flexDirection:"column", gap:10 }}>
-        {posts.length===0 && <div style={{ textAlign:"center",color:"#ccc",marginTop:60,fontSize:14 }}><div style={{fontSize:40,marginBottom:8}}>{"\u{1F338}"}</div>\u307E\u3060\u6295\u7A3F\u304C\u306A\u3044\u3088\uFF01</div>}
+        {posts.length===0 && <div style={{ textAlign:"center",color:"#ccc",marginTop:60,fontSize:14 }}><div style={{fontSize:40,marginBottom:8}}>🌸</div>まだ投稿がないよ！</div>}
         {posts.map(p=>(
           <div key={p.id} style={{ background:"white", borderRadius:16, padding:"12px 14px", boxShadow:"0 2px 10px rgba(140,160,255,0.15)", border:"2px solid rgba(200,220,255,0.5)", animation:"slideDown 0.3s ease" }}>
             <div style={{ fontSize:14, color:"#333", lineHeight:1.6, whiteSpace:"pre-wrap" }}>{p.text}</div>
             <div style={{ marginTop:6, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
               <span style={{ fontSize:11, color:"#bbb" }}>{p.time}</span>
-              <button onClick={()=>deletePost(p.id)} style={{ background:"none",border:"none",cursor:"pointer",fontSize:14,color:"#ddd",padding:"2px 4px" }}>{"\u2715"}</button>
+              <button onClick={()=>deletePost(p.id)} style={{ background:"none",border:"none",cursor:"pointer",fontSize:14,color:"#ddd",padding:"2px 4px" }}>✕</button>
             </div>
           </div>
         ))}
@@ -371,214 +401,427 @@ function MemoScreen({ app, onBack }) {
   );
 }
 
-// ─── ADHDポモドーロ画面 ──────────────────────────────
-// 設定: 集中25分 / 短休憩5分 / 長休憩15分 / 4セットで長休憩
-// 自動で次フェーズへ進行、セッションカウント表示、通知音付き
+// ─── ADHDポモドーロ画面（APOMO丸コピ） ──────────────
+// vanilla JSのAPOMOロジックをReactコンポーネントに埋め込み
 function PomodoroScreen({ onBack, onStop, addUsage }) {
-  const FOCUS = 25 * 60;
-  const SHORT_BREAK = 5 * 60;
-  const LONG_BREAK = 15 * 60;
-  const SETS_BEFORE_LONG = 4;
+  const containerRef = useRef(null);
+  const cleanupRef = useRef(null);
+  const workTotalRef = useRef(0);
+  const [wakeLockActive, setWakeLockActive] = useState(false);
 
-  const [phase, setPhase] = useState("focus");       // "focus" | "shortBreak" | "longBreak"
-  const [timeLeft, setTimeLeft] = useState(FOCUS);
-  const [running, setRunning] = useState(false);
-  const [sessionCount, setSessionCount] = useState(0);
-  const focusStartRef = useRef(null);   // 現在の集中セグメント開始時刻
-  const savedFocusRef = useRef(0);      // すでに記録済みの累計集中秒数
+  useWakeLock(wakeLockActive);
 
-  // Wake Lock: タイマー動作中のみ有効
-  useWakeLock(running);
-
-  // タイマーカウントダウン
   useEffect(() => {
-    if (!running) return;
-    const ref = setInterval(() => {
-      setTimeLeft(t => {
-        if (t <= 1) {
-          playNotificationSound();
-          if (phase === "focus") {
-            // 集中完了 → 記録
-            if (focusStartRef.current) {
-              const seg = Math.floor((Date.now() - focusStartRef.current) / 1000);
-              savedFocusRef.current += seg;
-              if (addUsage) addUsage("study", seg);
-              focusStartRef.current = null;
-            }
-            const newCount = sessionCount + 1;
-            setSessionCount(newCount);
-            if (newCount % SETS_BEFORE_LONG === 0) {
-              setPhase("longBreak");
-              return LONG_BREAK;
-            } else {
-              setPhase("shortBreak");
-              return SHORT_BREAK;
-            }
-          } else {
-            // 休憩終了 → 自動で次の集中へ
-            setPhase("focus");
-            focusStartRef.current = Date.now();
-            return FOCUS;
-          }
-        }
-        return t - 1;
-      });
-    }, 1000);
-    return () => clearInterval(ref);
-  }, [running, phase, sessionCount]);
+    const root = containerRef.current;
+    if (!root) return;
 
-  const handleToggle = () => {
-    if (running) {
-      // 一時停止: 集中中なら部分時間を記録
-      if (phase === "focus" && focusStartRef.current) {
-        const seg = Math.floor((Date.now() - focusStartRef.current) / 1000);
-        savedFocusRef.current += seg;
-        if (addUsage) addUsage("study", seg);
-        focusStartRef.current = null;
-      }
-    } else {
-      // 再開: 集中フェーズなら開始時刻を記録
-      if (phase === "focus") {
-        focusStartRef.current = Date.now();
+    // ── APOMO ロジック（vanilla JS） ──
+    const IDLING_SEC = 60;
+    const CIRCUMFERENCE = 2 * Math.PI * 112;
+
+    let phase = 'standby';
+    let elapsed = 0;
+    let workTotal = 0;
+    let isPaused = false;
+    let tickInterval = null;
+    let phaseStartTime = null;
+    let pausedAccum = 0;
+    let pauseStartTime = null;
+
+    let shindoiCount = 0;
+    let explosionCount = 0;
+    const SHINDOI_MAX = 100;
+    const SHINDOI_SHAKE = 100;
+    const SHINDOI_EXPLODE = 131;
+    const SHINDOI_KEY = 'adhd-shindoi';
+
+    // DOM refs
+    const timerDisplay = root.querySelector('#apomoTimerDisplay');
+    const timerStatus = root.querySelector('#apomoTimerStatus');
+    const progressCircle = root.querySelector('#apomoProgressCircle');
+    const pulseCircle = root.querySelector('#apomoPulseCircle');
+    const btnMain = root.querySelector('#apomoBtnMain');
+    const btnReset = root.querySelector('#apomoBtnReset');
+    const btnSkip = root.querySelector('#apomoBtnSkip');
+    const descText = root.querySelector('#apomoDescText');
+    const iconDeco = root.querySelector('#apomoIconDeco');
+    const choicePanel = root.querySelector('#apomoChoicePanel');
+    const btnContinue = root.querySelector('#apomoBtnContinue');
+    const btnRest = root.querySelector('#apomoBtnRest');
+    const sessionStats = root.querySelector('#apomoSessionStats');
+    const totalWorkDisplay = root.querySelector('#apomoTotalWorkDisplay');
+    const btnShindoi = root.querySelector('#apomoBtnShindoi');
+    const shindoiGaugeWrap = root.querySelector('#apomoShindoiGaugeWrap');
+    const shindoiGaugeFill = root.querySelector('#apomoShindoiGaugeFill');
+    const shindoiCountText = root.querySelector('#apomoShindoiCountText');
+    const shindoiExplosionBadge = root.querySelector('#apomoShindoiExplosionBadge');
+    const shindoiExplosionCountEl = root.querySelector('#apomoShindoiExplosionCount');
+
+    function pad(n) { return String(n).padStart(2, '0'); }
+    function formatTime(secs) { return `${pad(Math.floor(secs/60))}:${pad(secs%60)}`; }
+    function setProgress(ratio, color) {
+      const offset = CIRCUMFERENCE * (1 - Math.max(0, Math.min(1, ratio)));
+      progressCircle.style.strokeDashoffset = offset;
+      progressCircle.style.stroke = color;
+    }
+    function clearTick() { if (tickInterval) { clearInterval(tickInterval); tickInterval = null; } }
+    function getSmoothedElapsed() {
+      if (phaseStartTime === null) return elapsed;
+      const now = performance.now();
+      const paused = pausedAccum + (isPaused && pauseStartTime !== null ? now - pauseStartTime : 0);
+      return (now - phaseStartTime - paused) / 1000;
+    }
+    function markPhaseStart() { phaseStartTime = performance.now(); pausedAccum = 0; pauseStartTime = null; }
+    function apomoTodayStr() { return new Date().toLocaleDateString('sv'); }
+
+    function setStatus(text, cls) {
+      timerStatus.textContent = text;
+      timerStatus.className = 'timer-status ' + cls;
+    }
+
+    // Persistence
+    const STATE_KEY = 'adhd-timer-state';
+    const HISTORY_KEY = 'adhd-history';
+
+    function saveApomoHistory() {
+      const hist = JSON.parse(localStorage.getItem(HISTORY_KEY) || '{}');
+      hist[apomoTodayStr()] = workTotal;
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(hist));
+    }
+    function saveState() {
+      localStorage.setItem(STATE_KEY, JSON.stringify({ phase, elapsed, workTotal, isPaused, savedAt: Date.now(), savedDate: apomoTodayStr() }));
+    }
+    function loadState() {
+      const today = apomoTodayStr();
+      const hist = JSON.parse(localStorage.getItem(HISTORY_KEY) || '{}');
+      let s;
+      try { s = JSON.parse(localStorage.getItem(STATE_KEY) || 'null'); } catch { s = null; }
+      if (!s || s.savedDate !== today) { workTotal = hist[today] || 0; return; }
+      workTotal = s.workTotal;
+      isPaused = s.isPaused;
+      phase = s.phase;
+      const passedSec = Math.floor((Date.now() - s.savedAt) / 1000);
+      if (s.phase === 'idling' && !s.isPaused) {
+        const newElapsed = s.elapsed + passedSec;
+        if (newElapsed >= IDLING_SEC) { workTotal += (IDLING_SEC - s.elapsed); phase = 'choice'; elapsed = IDLING_SEC; }
+        else { elapsed = newElapsed; workTotal += passedSec; }
+      } else if (s.phase === 'working' && !s.isPaused) { elapsed = s.elapsed + passedSec; workTotal += passedSec; }
+      else if (s.phase === 'break' && !s.isPaused) { elapsed = s.elapsed + passedSec; }
+      else { elapsed = s.elapsed; }
+      saveApomoHistory();
+    }
+
+    // Shindoi
+    function saveShindoi() {
+      const data = JSON.parse(localStorage.getItem(SHINDOI_KEY) || '{}');
+      data[apomoTodayStr()] = { taps: shindoiCount, explosions: explosionCount };
+      localStorage.setItem(SHINDOI_KEY, JSON.stringify(data));
+    }
+    function loadShindoi() {
+      const data = JSON.parse(localStorage.getItem(SHINDOI_KEY) || '{}');
+      const today = data[apomoTodayStr()];
+      if (today) { shindoiCount = today.taps || 0; explosionCount = today.explosions || 0; }
+    }
+    function lerpColor(c1, c2, t) {
+      const [r1,g1,b1] = [parseInt(c1.slice(1,3),16), parseInt(c1.slice(3,5),16), parseInt(c1.slice(5,7),16)];
+      const [r2,g2,b2] = [parseInt(c2.slice(1,3),16), parseInt(c2.slice(3,5),16), parseInt(c2.slice(5,7),16)];
+      return `rgb(${Math.round(r1+(r2-r1)*t)},${Math.round(g1+(g2-g1)*t)},${Math.round(b1+(b2-b1)*t)})`;
+    }
+    function getGaugeColor(count) {
+      const r = Math.min(count / SHINDOI_MAX, 1);
+      if (r <= 0.25) return lerpColor('#4EA8DE', '#4CD964', r / 0.25);
+      if (r <= 0.50) return lerpColor('#4CD964', '#FFCC00', (r - 0.25) / 0.25);
+      if (r <= 0.75) return lerpColor('#FFCC00', '#FF7A00', (r - 0.50) / 0.25);
+      return lerpColor('#FF7A00', '#FF3B30', (r - 0.75) / 0.25);
+    }
+    function updateShindoiUI() {
+      const display = Math.min(shindoiCount, SHINDOI_MAX);
+      const pct = (display / SHINDOI_MAX) * 100;
+      shindoiGaugeFill.style.width = pct + '%';
+      shindoiGaugeFill.style.background = getGaugeColor(shindoiCount);
+      shindoiCountText.textContent = shindoiCount > 0 ? `${display} / ${SHINDOI_MAX}` : '';
+      if (shindoiCount > 0) {
+        const color = getGaugeColor(shindoiCount);
+        const alpha = Math.min(shindoiCount / SHINDOI_MAX, 1) * 0.18;
+        btnShindoi.style.background = color.replace('rgb(', 'rgba(').replace(')', `,${alpha.toFixed(2)})`);
+      } else { btnShindoi.style.background = 'transparent'; }
+      const ratio = pct / 100;
+      const emoji = ratio < 0.25 ? '😣' : ratio < 0.5 ? '😰' : ratio < 0.75 ? '😤' : ratio < 1 ? '🤯' : '💥';
+      btnShindoi.querySelector('.shindoi-emoji').textContent = emoji;
+      const isShaking = shindoiCount > SHINDOI_SHAKE && shindoiCount < SHINDOI_EXPLODE;
+      shindoiGaugeWrap.classList.toggle('shaking', isShaking);
+      shindoiGaugeWrap.classList.remove('exploding');
+      if (explosionCount > 0) { shindoiExplosionBadge.style.display = 'inline'; shindoiExplosionCountEl.textContent = explosionCount; }
+    }
+    function triggerConfetti() {
+      const colors = ['#FF3B30','#FF7A00','#FFCC00','#4CD964','#4EA8DE','#AF52DE','#FF2D55','#FF6B9D'];
+      for (let i = 0; i < 100; i++) {
+        const el = document.createElement('div');
+        el.className = 'confetti-piece';
+        const size = (6 + Math.random() * 9).toFixed(1);
+        el.style.cssText = `left:${(Math.random()*100).toFixed(1)}vw;animation-delay:${(Math.random()*0.8).toFixed(2)}s;animation-duration:${(2.5+Math.random()*2).toFixed(2)}s;background:${colors[Math.floor(Math.random()*colors.length)]};width:${size}px;height:${size}px;transform:rotate(${Math.floor(Math.random()*360)}deg);border-radius:${Math.random()>0.5?'50%':'3px'}`;
+        document.body.appendChild(el);
+        el.addEventListener('animationend', () => el.remove(), { once: true });
       }
     }
-    setRunning(r => !r);
-  };
+    function triggerExplosion() {
+      shindoiGaugeFill.style.transition = 'none';
+      shindoiGaugeFill.style.width = '100%';
+      shindoiGaugeFill.style.background = '#FF3B30';
+      btnShindoi.style.background = 'rgba(255,59,48,0.3)';
+      btnShindoi.querySelector('.shindoi-emoji').textContent = '💥';
+      shindoiGaugeWrap.classList.remove('shaking');
+      void shindoiGaugeWrap.offsetWidth;
+      shindoiGaugeWrap.classList.add('exploding');
+      triggerConfetti();
+      setTimeout(() => { shindoiGaugeFill.style.transition = 'width 0.4s ease, background 0.3s ease'; updateShindoiUI(); }, 550);
+    }
+    function shindoiTap() {
+      shindoiCount++;
+      if (shindoiCount >= SHINDOI_EXPLODE) { explosionCount++; shindoiCount = 0; saveShindoi(); triggerExplosion(); return; }
+      updateShindoiUI();
+      saveShindoi();
+    }
 
-  const handleReset = () => {
-    setRunning(false);
-    setPhase("focus");
-    setTimeLeft(FOCUS);
-    focusStartRef.current = null;
-  };
+    // Sound
+    function playCoinSound() {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const gain = ctx.createGain();
+      gain.connect(ctx.destination);
+      [[988, 0, 0.08], [1319, 0.08, 0.28]].forEach(([freq, start, end]) => {
+        const osc = ctx.createOscillator(); osc.type = 'square'; osc.frequency.value = freq;
+        osc.connect(gain); osc.start(ctx.currentTime + start); osc.stop(ctx.currentTime + end);
+      });
+      gain.gain.setValueAtTime(0.18, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+    }
+
+    // Phase transitions
+    function startIdling() {
+      clearTick(); phase = 'idling'; elapsed = 0; isPaused = false; markPhaseStart();
+      tickInterval = setInterval(tick, 1000); setWakeLockActive(true); render();
+    }
+    function startWorking() {
+      clearTick(); phase = 'working'; elapsed = 0; isPaused = false; markPhaseStart();
+      tickInterval = setInterval(tick, 1000); setWakeLockActive(true); render();
+    }
+    function startBreak() {
+      clearTick(); phase = 'break'; elapsed = 0; isPaused = false; markPhaseStart();
+      tickInterval = setInterval(tick, 1000); setWakeLockActive(true); render();
+    }
+    function showChoice() { clearTick(); phase = 'choice'; isPaused = false; playCoinSound(); render(); }
+    function reset() {
+      clearTick(); phase = 'standby'; elapsed = 0; workTotal = 0; isPaused = false;
+      phaseStartTime = null; pausedAccum = 0; pauseStartTime = null;
+      setWakeLockActive(false); saveState(); saveApomoHistory(); render();
+      sessionStats.style.display = 'none';
+    }
+
+    function tick() {
+      if (isPaused) return;
+      elapsed++;
+      if (phase === 'idling') { workTotal++; saveApomoHistory(); saveState(); if (elapsed >= IDLING_SEC) { showChoice(); return; } }
+      else if (phase === 'working') { workTotal++; saveApomoHistory(); saveState(); }
+      else if (phase === 'break') { saveState(); }
+      workTotalRef.current = workTotal;
+      render();
+    }
+
+    function render() {
+      choicePanel.classList.remove('visible');
+      pulseCircle.classList.toggle('active', phase === 'standby');
+      switch (phase) {
+        case 'standby':
+          timerDisplay.textContent = '00:00'; setProgress(0, '#FF7A00'); setStatus('待機中...', 'status-standby');
+          btnMain.innerHTML = '▶'; btnMain.classList.remove('break-mode');
+          btnReset.disabled = true; btnSkip.disabled = true;
+          descText.innerHTML = 'ADHDポモドーロはADHDの「先延ばし」を防止するADHD向け作業タイマーです！<br>まずは上の再生ボタンを押して1分間だけのアイドリング作業を実施しましょう！<br>1分だけ作業した後は休憩もできるのでまずは1分!';
+          iconDeco.textContent = '🧑‍💻'; break;
+        case 'idling':
+          timerDisplay.textContent = formatTime(workTotal); setProgress(elapsed / IDLING_SEC, '#FF7A00');
+          setStatus('アイドリング中...', 'status-idling');
+          btnMain.innerHTML = isPaused ? '▶' : '⏸'; btnMain.classList.remove('break-mode');
+          btnReset.disabled = false; btnSkip.disabled = true;
+          descText.innerHTML = 'アイドリング作業中！まず1分だけ頑張りましょう。<br>1分たったら続行か休憩かを選べます。';
+          iconDeco.textContent = '🧑‍💻'; break;
+        case 'choice':
+          timerDisplay.textContent = formatTime(workTotal); setProgress(1, '#FF7A00');
+          setStatus('アイドリング中...', 'status-choice');
+          btnMain.innerHTML = '▶'; btnMain.classList.remove('break-mode');
+          btnReset.disabled = false; btnSkip.disabled = true;
+          descText.innerHTML = 'アイドリング作業が終了しました。<br>このまま作業を継続するか一度休憩するかを選んでください。';
+          iconDeco.textContent = ''; choicePanel.classList.add('visible'); break;
+        case 'working':
+          timerDisplay.textContent = formatTime(workTotal); setProgress(1, '#FF7A00');
+          setStatus('作業中', 'status-working');
+          btnMain.innerHTML = isPaused ? '▶' : '⏸'; btnMain.classList.remove('break-mode');
+          btnReset.disabled = false; btnSkip.disabled = false;
+          descText.innerHTML = 'ナイス継続です！この調子で気の向くまで存分に作業を実施しましょう。<br>中央のスキップボタンを押すと休憩に入ることができます。';
+          iconDeco.textContent = '🧑‍💻'; break;
+        case 'break':
+          timerDisplay.textContent = formatTime(elapsed); setProgress(1, '#4EA8DE');
+          setStatus('休憩中', 'status-break');
+          btnMain.innerHTML = isPaused ? '▶' : '⏸'; btnMain.classList.add('break-mode');
+          btnReset.disabled = false; btnSkip.disabled = false;
+          descText.innerHTML = 'ゆっくり休憩しましょう。時間制限はありません。<br>準備できたらスキップで次のアイドリング作業へ。';
+          iconDeco.textContent = '☕'; break;
+      }
+      if (workTotal > 0) {
+        sessionStats.style.display = 'block';
+        const mins = Math.floor(workTotal / 60); const secs = workTotal % 60;
+        totalWorkDisplay.textContent = mins > 0 ? `${mins}分${secs}秒` : `${secs}秒`;
+      }
+    }
+
+    // Event listeners
+    const onBtnMain = () => {
+      if (phase === 'standby') { startIdling(); return; }
+      if (phase === 'choice') { startWorking(); return; }
+      isPaused = !isPaused;
+      if (isPaused) { pauseStartTime = performance.now(); setWakeLockActive(false); }
+      else { if (pauseStartTime !== null) { pausedAccum += performance.now() - pauseStartTime; pauseStartTime = null; } clearTick(); tickInterval = setInterval(tick, 1000); setWakeLockActive(true); }
+      saveState(); render();
+    };
+    const onBtnSkip = () => { if (phase === 'working') startBreak(); else if (phase === 'break') startIdling(); };
+    const onBtnReset = () => { reset(); };
+    const onBtnContinue = () => { startWorking(); };
+    const onBtnRest = () => { startBreak(); };
+    const onShindoiTap = () => { shindoiTap(); };
+
+    btnMain.addEventListener('click', onBtnMain);
+    btnSkip.addEventListener('click', onBtnSkip);
+    btnReset.addEventListener('click', onBtnReset);
+    btnContinue.addEventListener('click', onBtnContinue);
+    btnRest.addEventListener('click', onBtnRest);
+    btnShindoi.addEventListener('click', onShindoiTap);
+
+    // Animation loop
+    let rafId;
+    function animationLoop() {
+      if (phase === 'idling' && phaseStartTime !== null) {
+        const smooth = getSmoothedElapsed();
+        const offset = CIRCUMFERENCE * (1 - Math.min(1, smooth / IDLING_SEC));
+        progressCircle.style.strokeDashoffset = offset;
+      }
+      rafId = requestAnimationFrame(animationLoop);
+    }
+    rafId = requestAnimationFrame(animationLoop);
+
+    // Visibility handler
+    const onVisibility = () => { if (document.visibilityState === 'hidden') saveState(); };
+    window.addEventListener('visibilitychange', onVisibility);
+
+    // Init
+    loadState();
+    loadShindoi();
+    updateShindoiUI();
+
+    if (phase === 'idling' && !isPaused) { markPhaseStart(); phaseStartTime -= elapsed * 1000; tickInterval = setInterval(tick, 1000); setWakeLockActive(true); }
+    else if (phase === 'working' && !isPaused) { markPhaseStart(); phaseStartTime -= elapsed * 1000; tickInterval = setInterval(tick, 1000); setWakeLockActive(true); }
+    else if (phase === 'break' && !isPaused) { markPhaseStart(); phaseStartTime -= elapsed * 1000; tickInterval = setInterval(tick, 1000); setWakeLockActive(true); }
+
+    render();
+
+    // Cleanup
+    cleanupRef.current = () => {
+      clearTick();
+      cancelAnimationFrame(rafId);
+      window.removeEventListener('visibilitychange', onVisibility);
+      btnMain.removeEventListener('click', onBtnMain);
+      btnSkip.removeEventListener('click', onBtnSkip);
+      btnReset.removeEventListener('click', onBtnReset);
+      btnContinue.removeEventListener('click', onBtnContinue);
+      btnRest.removeEventListener('click', onBtnRest);
+      btnShindoi.removeEventListener('click', onShindoiTap);
+      saveState();
+    };
+
+    return () => {
+      if (cleanupRef.current) cleanupRef.current();
+    };
+  }, []);
 
   const handleGoHome = () => {
-    // 動作中の集中時間を記録
-    if (running && phase === "focus" && focusStartRef.current) {
-      const seg = Math.floor((Date.now() - focusStartRef.current) / 1000);
-      if (addUsage) addUsage("study", seg);
+    if (cleanupRef.current) cleanupRef.current();
+    // 勉強の作業時間を alltime 側に記録
+    if (addUsage && workTotalRef.current > 0) {
+      addUsage("study", workTotalRef.current);
     }
+    setWakeLockActive(false);
     onStop();
     onBack();
   };
 
-  const fmt = s => `${String(Math.floor(s/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`;
-
-  const getPhaseTotal = () => {
-    if (phase === "focus") return FOCUS;
-    if (phase === "shortBreak") return SHORT_BREAK;
-    return LONG_BREAK;
-  };
-  const total = getPhaseTotal();
-  const progress = ((total - timeLeft) / total) * 100;
-
-  const bgColor = phase === "focus"
-    ? "linear-gradient(160deg,#e8f5e0 0%,#d0f0c0 100%)"
-    : phase === "shortBreak"
-      ? "linear-gradient(160deg,#f5e8ff 0%,#e0d0ff 100%)"
-      : "linear-gradient(160deg,#e0f0ff 0%,#c8e0ff 100%)";
-
-  const strokeColor = phase === "focus" ? "#7ec870" : phase === "shortBreak" ? "#b088e8" : "#70a8d8";
-  const labelColor = phase === "focus" ? "#66aa44" : phase === "shortBreak" ? "#9966cc" : "#5588bb";
-
-  const phaseLabel = phase === "focus"
-    ? "\u{1F338} \u96C6\u4E2D\u30BF\u30A4\u30E0"
-    : phase === "shortBreak"
-      ? "\u{1F375} \u4F11\u61A9\u30BF\u30A4\u30E0"
-      : "\u{1F3D6}\uFE0F \u30ED\u30F3\u30B0\u4F11\u61A9";
-
-  // セッションドットインジケーター
-  const currentSetPosition = sessionCount % SETS_BEFORE_LONG;
-  const dots = [];
-  for (let i = 0; i < SETS_BEFORE_LONG; i++) {
-    const isDone = i < currentSetPosition;
-    const isCurrent = i === currentSetPosition && phase === "focus";
-    dots.push(
-      <div key={i} style={{
-        width: 12, height: 12, borderRadius: "50%",
-        background: isDone ? strokeColor : isCurrent ? "rgba(255,255,255,0.9)" : "rgba(200,200,200,0.3)",
-        border: isCurrent ? `2px solid ${strokeColor}` : "2px solid transparent",
-        transition: "all 0.3s ease",
-      }} />
-    );
-  }
-
   return (
-    <div style={{
-      minHeight: "100vh", background: bgColor,
-      display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-      fontFamily: "'Hiragino Maru Gothic Pro',sans-serif", gap: 20, padding: 24,
-      transition: "background 1s ease",
-    }}>
-      {/* フェーズラベル */}
-      <div style={{
-        fontSize: 14, fontWeight: 700, color: labelColor,
-        background: "rgba(255,255,255,0.7)", borderRadius: 20, padding: "6px 18px", letterSpacing: 2,
-      }}>
-        {phaseLabel}
-      </div>
+    <div className="apomo-root" ref={containerRef}>
+      <header className="app-header">
+        <div className="app-title">ADHDポモドーロ</div>
+      </header>
 
-      {/* セッションカウンター */}
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <div style={{ display: "flex", gap: 6 }}>{dots}</div>
-        <span style={{ fontSize: 12, color: "#999", marginLeft: 4 }}>
-          {sessionCount}\u30BB\u30C3\u30B7\u30E7\u30F3\u5B8C\u4E86
-        </span>
-      </div>
-
-      {/* プログレスリング */}
-      <div style={{ position: "relative", width: 200, height: 200 }}>
-        <svg width="200" height="200" style={{ transform: "rotate(-90deg)" }}>
-          <circle cx="100" cy="100" r="88" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="12"/>
-          <circle cx="100" cy="100" r="88" fill="none" stroke={strokeColor}
-            strokeWidth="12" strokeDasharray={`${2*Math.PI*88}`}
-            strokeDashoffset={`${2*Math.PI*88*(1-progress/100)}`} strokeLinecap="round"
-            style={{ transition: "stroke-dashoffset 1s linear" }}/>
-        </svg>
-        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div style={{ fontSize: 48, fontWeight: 800, color: "#333", fontVariantNumeric: "tabular-nums", letterSpacing: 2 }}>
-            {fmt(timeLeft)}
+      <div className="shindoi-section">
+        <div className="shindoi-gauge-wrap" id="apomoShindoiGaugeWrap">
+          <div className="shindoi-gauge-bg">
+            <div className="shindoi-gauge-fill" id="apomoShindoiGaugeFill"></div>
+          </div>
+          <div className="shindoi-meta">
+            <span className="shindoi-count-text" id="apomoShindoiCountText"></span>
+            <span className="shindoi-explosion-badge" id="apomoShindoiExplosionBadge" style={{display:'none'}}>💥 <span id="apomoShindoiExplosionCount">0</span>回</span>
           </div>
         </div>
       </div>
 
-      {/* 操作ボタン */}
-      <div style={{ display: "flex", gap: 12 }}>
-        <button onClick={handleToggle} style={{
-          background: running
-            ? "linear-gradient(135deg,#ffb3c8,#ff9eb5)"
-            : "linear-gradient(135deg,#a0d890,#7ec870)",
-          border: "none", borderRadius: 50, padding: "14px 36px", fontSize: 16,
-          fontWeight: 700, color: "white", cursor: "pointer",
-        }}>
-          {running ? "\u23F8 \u4E00\u6642\u505C\u6B62" : "\u25B6 \u30B9\u30BF\u30FC\u30C8"}
-        </button>
-        <button onClick={handleReset} style={{
-          background: "rgba(255,255,255,0.7)", border: "2px solid rgba(200,200,200,0.5)",
-          borderRadius: 50, padding: "14px 20px", fontSize: 16, cursor: "pointer", color: "#aaa",
-        }}>{"\u21BA"}</button>
+      <div className="timer-header">
+        <div className="timer-display" id="apomoTimerDisplay">00:00</div>
+        <div className="timer-status status-standby" id="apomoTimerStatus">待機中...</div>
       </div>
 
-      {/* スキップボタン */}
-      {running && phase !== "focus" && (
-        <button onClick={() => {
-          playNotificationSound();
-          setPhase("focus");
-          setTimeLeft(FOCUS);
-        }} style={{
-          background: "rgba(255,255,255,0.6)", border: "1px solid rgba(200,200,200,0.4)",
-          borderRadius: 20, padding: "8px 20px", fontSize: 12, fontWeight: 600,
-          cursor: "pointer", color: "#888",
-        }}>
-          {"\u23ED"} \u4F11\u61A9\u30B9\u30AD\u30C3\u30D7
-        </button>
-      )}
+      <div className="timer-wrapper">
+        <svg className="timer-svg" viewBox="0 0 260 260">
+          <circle className="timer-bg-circle" cx="130" cy="130" r="112"/>
+          <circle className="pulse-circle" id="apomoPulseCircle" cx="130" cy="130" r="112"/>
+          <circle className="timer-progress-circle" id="apomoProgressCircle"
+            cx="130" cy="130" r="112" stroke="#FF7A00"
+            strokeDasharray="703.7" strokeDashoffset="703.7"/>
+        </svg>
+        <div className="timer-center" id="apomoBtnShindoi">
+          <span className="shindoi-emoji">😣</span>
+          <span className="shindoi-label">しんどい</span>
+        </div>
+      </div>
 
-      {/* ホームに戻る */}
-      <button onClick={handleGoHome} style={{
-        background: "none", border: "none", cursor: "pointer", fontSize: 13,
-        color: "#aaa", textDecoration: "underline",
-      }}>{"\u{1F3E0}"} \u30DB\u30FC\u30E0\u306B\u623B\u308B</button>
+      <div className="controls">
+        <button className="btn-icon" id="apomoBtnReset" title="リセット" disabled>↺</button>
+        <button className="btn-main" id="apomoBtnMain" title="スタート">▶</button>
+        <button className="btn-icon" id="apomoBtnSkip" title="スキップ" disabled>›</button>
+      </div>
+
+      <div className="description-area">
+        <p className="description-text" id="apomoDescText">
+          今日も一日頑張りましょう！
+        </p>
+        <div className="icon-decoration" id="apomoIconDeco">🧑‍💻</div>
+      </div>
+
+      <div className="choice-panel" id="apomoChoicePanel">
+        <button className="btn-choice continue" id="apomoBtnContinue">
+          <span className="choice-icon">🧑‍💻</span>
+          <span className="choice-label">続行</span>
+          <span className="choice-desc">このまま作業を継続します</span>
+        </button>
+        <button className="btn-choice rest" id="apomoBtnRest">
+          <span className="choice-icon">☕</span>
+          <span className="choice-label">休憩</span>
+          <span className="choice-desc">好きなだけ休憩してから再度アイドリング作業を実施します</span>
+        </button>
+      </div>
+
+      <div className="session-stats" id="apomoSessionStats" style={{display:'none'}}>
+        本日の作業時間: <span id="apomoTotalWorkDisplay">0分</span>
+      </div>
+
+      <button className="btn-back-home" onClick={handleGoHome}>🏠 ホームに戻る</button>
     </div>
   );
 }
@@ -586,40 +829,23 @@ function PomodoroScreen({ onBack, onStop, addUsage }) {
 // ─── タイマー画面（Wake Lock対応） ──────────────────
 function TimerScreen({ mode, startTime, onStop, onBack }) {
   const [elapsed, setElapsed] = useState(() => Math.floor((Date.now()-startTime)/1000));
-
-  // Wake Lock: タイマー動作中は常に有効
   useWakeLock(true);
-
   useEffect(() => {
     const ref = setInterval(() => setElapsed(Math.floor((Date.now()-startTime)/1000)), 1000);
     return () => clearInterval(ref);
   }, [startTime]);
-
   const fmt = s => {
     const h=Math.floor(s/3600), m=Math.floor((s%3600)/60), sec=s%60;
-    return h>0
-      ? `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:${String(sec).padStart(2,"0")}`
-      : `${String(m).padStart(2,"0")}:${String(sec).padStart(2,"0")}`;
+    return h>0 ? `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:${String(sec).padStart(2,"0")}` : `${String(m).padStart(2,"0")}:${String(sec).padStart(2,"0")}`;
   };
-
   return (
-    <div style={{
-      minHeight: "100vh", background: `linear-gradient(160deg,${mode.color} 0%,white 100%)`,
-      display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-      fontFamily: "'Hiragino Maru Gothic Pro',sans-serif", gap: 28, padding: 24,
-    }}>
-      <div style={{ fontSize: 72, filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.1))", animation: "pulse 2s ease-in-out infinite" }}>{mode.character}</div>
-      <div style={{
-        background: "rgba(255,255,255,0.8)", borderRadius: 24, padding: "24px 48px", textAlign: "center",
-        boxShadow: "0 8px 32px rgba(0,0,0,0.08)", border: "2px solid rgba(255,255,255,0.9)",
-      }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: "#888", marginBottom: 8, letterSpacing: 1 }}>{mode.label}</div>
-        <div style={{ fontSize: 52, fontWeight: 800, color: "#444", letterSpacing: 2, fontVariantNumeric: "tabular-nums" }}>{fmt(elapsed)}</div>
+    <div style={{ minHeight:"100vh", background:`linear-gradient(160deg,${mode.color} 0%,white 100%)`, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", fontFamily:"'Hiragino Maru Gothic Pro',sans-serif", gap:28, padding:24 }}>
+      <div style={{ fontSize:72, filter:"drop-shadow(0 4px 8px rgba(0,0,0,0.1))", animation:"pulse 2s ease-in-out infinite" }}>{mode.character}</div>
+      <div style={{ background:"rgba(255,255,255,0.8)", borderRadius:24, padding:"24px 48px", textAlign:"center", boxShadow:"0 8px 32px rgba(0,0,0,0.08)", border:"2px solid rgba(255,255,255,0.9)" }}>
+        <div style={{ fontSize:14, fontWeight:700, color:"#888", marginBottom:8, letterSpacing:1 }}>{mode.label}</div>
+        <div style={{ fontSize:52, fontWeight:800, color:"#444", letterSpacing:2, fontVariantNumeric:"tabular-nums" }}>{fmt(elapsed)}</div>
       </div>
-      <button onClick={() => { onStop(elapsed); onBack(); }} style={{
-        background: "linear-gradient(135deg,#ffb3c8,#ff9eb5)", border: "none", borderRadius: 50,
-        padding: "14px 36px", fontSize: 16, fontWeight: 700, color: "white", cursor: "pointer",
-      }}>{"\u{1F3E0}"} \u30DB\u30FC\u30E0\u306B\u623B\u308B</button>
+      <button onClick={() => { onStop(elapsed); onBack(); }} style={{ background:"linear-gradient(135deg,#ffb3c8,#ff9eb5)", border:"none", borderRadius:50, padding:"14px 36px", fontSize:16, fontWeight:700, color:"white", cursor:"pointer" }}>🏠 ホームに戻る</button>
     </div>
   );
 }
@@ -647,101 +873,68 @@ function App() {
     const elapsed = Math.floor((Date.now() - homeStartTime) / 1000);
     addUsage("interval", elapsed);
   };
-
   const handleModeClick = (mode) => {
     leaveHome();
     if (mode.screen === "timer") setTimerStartTime(Date.now());
     setScreen({ type: mode.screen, data: mode });
   };
-
-  const backToHome = () => {
-    setHomeStartTime(Date.now());
-    setScreen(null);
-  };
+  const backToHome = () => { setHomeStartTime(Date.now()); setScreen(null); };
 
   if (screen?.type === "today")   return <TodayUsageScreen todayUsage={todayUsage} onBack={backToHome} />;
   if (screen?.type === "history") return <HistoryUsageScreen history={history} onBack={backToHome} />;
   if (screen?.type === "sns") {
     const appStartTime = screen.startTime;
-    return <MemoScreen app={screen.data} onBack={() => {
-      const elapsed = Math.floor((Date.now() - appStartTime) / 1000);
-      addUsage(screen.data.id, elapsed);
-      backToHome();
-    }} />;
+    return <MemoScreen app={screen.data} onBack={() => { const elapsed = Math.floor((Date.now() - appStartTime) / 1000); addUsage(screen.data.id, elapsed); backToHome(); }} />;
   }
   if (screen?.type === "pomodoro") return <PomodoroScreen onBack={backToHome} onStop={() => {}} addUsage={addUsage} />;
-  if (screen?.type === "timer") return (
-    <TimerScreen mode={screen.data} startTime={timerStartTime}
-      onStop={(elapsed) => addUsage(screen.data.id, elapsed)}
-      onBack={backToHome} />
-  );
+  if (screen?.type === "timer") return <TimerScreen mode={screen.data} startTime={timerStartTime} onStop={(elapsed) => addUsage(screen.data.id, elapsed)} onBack={backToHome} />;
 
   // ─── ホーム画面 ──────────────────────────────────────
   return (
-    <div style={{
-      minHeight: "100vh",
-      background: "linear-gradient(160deg,#e8f0ff 0%,#f5e8ff 50%,#fff0f8 100%)",
-      fontFamily: "'Hiragino Maru Gothic Pro','Rounded Mplus 1c',sans-serif",
-      padding: "16px 12px 32px", maxWidth: 400, margin: "0 auto",
-    }}>
-      {/* SNS・Firefoxボタン */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 12 }}>
+    <div style={{ minHeight:"100vh", background:"linear-gradient(160deg,#e8f0ff 0%,#f5e8ff 50%,#fff0f8 100%)", fontFamily:"'Hiragino Maru Gothic Pro','Rounded Mplus 1c',sans-serif", padding:"16px 12px 32px", maxWidth:400, margin:"0 auto" }}>
+      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:12 }}>
         {APPS.map(app => (
           <div key={app.id} onClick={() => { leaveHome(); setScreen({ type:"sns", data:app, startTime: Date.now() }); }} style={{
-            background: app.color, borderRadius: 16, display: "flex", flexDirection: "column",
-            alignItems: "center", justifyContent: "center",
-            height: 68, fontSize: 13, fontWeight: 700,
-            color: app.textColor || "#333", cursor: "pointer",
-            boxShadow: "0 2px 10px rgba(0,0,0,0.12)", gap: 4,
-            border: "2px solid rgba(255,255,255,0.6)",
+            background:app.color, borderRadius:16, display:"flex", flexDirection:"column",
+            alignItems:"center", justifyContent:"center", height:68, fontSize:13, fontWeight:700,
+            color:app.textColor||"#333", cursor:"pointer", boxShadow:"0 2px 10px rgba(0,0,0,0.12)", gap:4,
+            border:"2px solid rgba(255,255,255,0.6)",
           }}>
-            <span style={{ fontSize: 24 }}>{app.emoji}</span>
+            <span style={{ fontSize:24 }}>{app.emoji}</span>
             <span>{app.label}</span>
           </div>
         ))}
       </div>
-
-      {/* 使用量カード */}
-      <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
+      <div style={{ display:"flex", gap:10, marginBottom:12 }}>
         <UsageCard type="history" todayUsage={todayUsage} history={history} onClick={() => { leaveHome(); setScreen({ type:"history" }); }} />
         <UsageCard type="today"   todayUsage={todayUsage} history={history} onClick={() => { leaveHome(); setScreen({ type:"today" }); }} />
       </div>
-
-      {/* モードボタン */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8, marginBottom: 12 }}>
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:8, marginBottom:12 }}>
         {MODES.map(mode => (
           <div key={mode.id} onClick={() => handleModeClick(mode)} style={{
-            background: `linear-gradient(135deg,${mode.color} 60%,white)`,
-            borderRadius: 18, display: "flex", flexDirection: "column",
-            alignItems: "center", justifyContent: "center",
-            padding: "14px 4px", cursor: "pointer",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-            border: "2px solid rgba(255,255,255,0.8)",
-            transition: "all 0.2s ease", gap: 6,
+            background:`linear-gradient(135deg,${mode.color} 60%,white)`, borderRadius:18,
+            display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center",
+            padding:"14px 4px", cursor:"pointer", boxShadow:"0 2px 8px rgba(0,0,0,0.08)",
+            border:"2px solid rgba(255,255,255,0.8)", transition:"all 0.2s ease", gap:6,
           }}>
-            <span style={{ fontSize: 28 }}>{mode.character}</span>
-            <span style={{ fontSize: 11, fontWeight: 700, color: "#555" }}>{mode.label}</span>
+            <span style={{ fontSize:28 }}>{mode.character}</span>
+            <span style={{ fontSize:11, fontWeight:700, color:"#555" }}>{mode.label}</span>
           </div>
         ))}
       </div>
-
-      {/* 空き地 */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8 }}>
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:8 }}>
         {[0,1,2,3].map(i => (
           <div key={i} style={{
-            borderRadius: 16,
-            border: `2px dashed ${["#b0d4a0","#a0c4f0","#f0d0a0","#d0b0f0"][i]}`,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            height: 80, fontSize: 13, color: "#bbb", cursor: "pointer",
-            background: "rgba(255,255,255,0.5)",
-          }}>\u7A7A\u304D\u5730</div>
+            borderRadius:16, border:`2px dashed ${["#b0d4a0","#a0c4f0","#f0d0a0","#d0b0f0"][i]}`,
+            display:"flex", alignItems:"center", justifyContent:"center",
+            height:80, fontSize:13, color:"#bbb", cursor:"pointer", background:"rgba(255,255,255,0.5)",
+          }}>空き地</div>
         ))}
       </div>
     </div>
   );
 }
 
-// ─── レンダー ────────────────────────────────────────
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(<App />);
 </script>
