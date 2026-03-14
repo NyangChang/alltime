@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>AllTime - App Tracker</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { font-family: 'Hiragino Maru Gothic Pro', 'Rounded Mplus 1c', sans-serif; overscroll-behavior: none; }
+  @keyframes slideDown { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
+
+// ─── 定数 ───────────────────────────────────────────
+const APPS = [
+  { id: "sns",     label: "SNS",     emoji: "\u{1F4AC}", color: "linear-gradient(135deg, #222 40%, #4caf50)", textColor: "white" },
+  { id: "firefox", label: "Firefox", emoji: "\u{1F98A}", color: "#f4956a" },
+];
+const MODES = [
+  { id: "study",   label: "\u52C9\u5F37",       color: "#b5e8a0", character: "\u{1F338}", screen: "pomodoro" },
+  { id: "chill",   label: "\u30C1\u30EB\u30BF\u30A4\u30E0", color: "#f0d6f5", character: "\u{1F343}", screen: "timer" },
+  { id: "commute", label: "\u79FB\u52D5\u4E2D",     color: "#fff3b0", character: "\u{1F695}", screen: "timer" },
+  { id: "sleep",   label: "\u7761\u7720",       color: "#d9d6f5", character: "\u{1F634}", screen: "timer" },
+];
+const TRACK_ITEMS = [
+  { id: "sns",      label: "SNS",              color: "#5abf7a" },
+  { id: "firefox",  label: "Firefox",          color: "#f4956a" },
+  { id: "study",    label: "\u52C9\u5F37",     color: "#7ec870" },
+  { id: "chill",    label: "\u30C1\u30EB\u30BF\u30A4\u30E0", color: "#c88ae0" },
+  { id: "commute",  label: "\u79FB\u52D5\u4E2D",   color: "#f5d060" },
+  { id: "sleep",    label: "\u7761\u7720",      color: "#9090d8" },
+  { id: "interval", label: "\u30A4\u30F3\u30BF\u30FC\u30D0\u30EB", color: "#b0c8e8" },
+];
+const STORAGE_KEYS = { sns: "memo_posts_sns", firefox: "memo_posts_firefox" };
+const USAGE_TODAY_KEY  = "usage_today";
+const USAGE_HISTORY_KEY = "usage_history";
+
+// ─── Wake Lock ヘルパー ─────────────────────────────
+async function acquireWakeLock() {
+  try {
+    if ('wakeLock' in navigator) {
+      const lock = await navigator.wakeLock.request('screen');
+      return lock;
+    }
+  } catch (e) {
+    console.log('Wake Lock not acquired:', e.message);
+  }
+  return null;
+}
+
+async function releaseWakeLock(lockRef) {
+  try {
+    if (lockRef) {
+      await lockRef.release();
+    }
+  } catch (e) {
+    console.log('Wake Lock release failed:', e.message);
+  }
+}
+
+// Wake Lock を管理するカスタムフック
+function useWakeLock(active) {
+  const lockRef = useRef(null);
+
+  useEffect(() => {
+    if (active) {
+      acquireWakeLock().then(lock => { lockRef.current = lock; });
+      // visibilitychange で再取得（タブ復帰時）
+      const handleVisibility = async () => {
+        if (active && document.visibilityState === 'visible') {
+          lockRef.current = await acquireWakeLock();
+        }
+      };
+      document.addEventListener('visibilitychange', handleVisibility);
+      return () => {
+        releaseWakeLock(lockRef.current);
+        lockRef.current = null;
+        document.removeEventListener('visibilitychange', handleVisibility);
+      };
+    } else {
+      releaseWakeLock(lockRef.current);
+      lockRef.current = null;
+    }
+  }, [active]);
+
+  return lockRef;
+}
+
+// ─── 通知音ヘルパー ─────────────────────────────────
+function playNotificationSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const playTone = (freq, startTime, duration) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.value = freq;
+      osc.type = 'sine';
+      gain.gain.setValueAtTime(0.3, startTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+      osc.start(startTime);
+      osc.stop(startTime + duration);
+    };
+    const now = ctx.currentTime;
+    playTone(880, now, 0.15);
+    playTone(1100, now + 0.18, 0.15);
+    playTone(1320, now + 0.36, 0.25);
+  } catch (e) {
+    console.log('Audio not available:', e.message);
+  }
+}
+
+// ─── ユーティリティ ───────────────────────────────────
+const todayStr = () => new Date().toLocaleDateString("ja-JP", { year:"numeric", month:"2-digit", day:"2-digit" }).replace(/\//g,"-");
+
+function loadTodayUsage() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(USAGE_TODAY_KEY) || "{}");
+    if (raw.date !== todayStr()) return { date: todayStr(), sns:0, firefox:0, study:0, chill:0, commute:0, sleep:0, interval:0 };
+    return raw;
+  } catch { return { date: todayStr(), sns:0, firefox:0, study:0, chill:0, commute:0, sleep:0, interval:0 }; }
+}
+function saveTodayUsage(data) {
+  localStorage.setItem(USAGE_TODAY_KEY, JSON.stringify({ ...data, date: todayStr() }));
+}
+function loadHistory() {
+  try { return JSON.parse(localStorage.getItem(USAGE_HISTORY_KEY) || "[]"); }
+  catch { return []; }
+}
+function saveHistory(arr) {
+  localStorage.setItem(USAGE_HISTORY_KEY, JSON.stringify(arr));
+}
+function flushTodayToHistory(todayData) {
+  const hist = loadHistory();
+  const idx = hist.findIndex(d => d.date === todayData.date);
+  if (idx >= 0) hist[idx] = todayData;
+  else hist.push(todayData);
+  saveHistory(hist);
+}
+function fmtSec(s) {
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  if (h > 0) return `${h}h${String(m).padStart(2,"0")}m`;
+  if (m > 0) return `${m}m${String(sec).padStart(2,"0")}s`;
+  return `${sec}s`;
+}
+
+// ─── ミニバーチャート（ホーム用） ────────────────────
+function MiniStackBar({ todayUsage }) {
+  const total = TRACK_ITEMS.reduce((s, t) => s + (todayUsage[t.id] || 0), 0);
+  if (total === 0) return <div style={{ height: 12, background: "#eee", borderRadius: 6 }} />;
+  return (
+    <div style={{ display: "flex", height: 12, borderRadius: 6, overflow: "hidden" }}>
+      {TRACK_ITEMS.map(t => {
+        const pct = ((todayUsage[t.id] || 0) / total) * 100;
+        if (pct < 0.5) return null;
+        return <div key={t.id} style={{ width: `${pct}%`, background: t.color }} />;
+      })}
+    </div>
+  );
+}
+
+function MiniHistoryBars({ history }) {
+  const last7 = history.slice(-7);
+  const maxTotal = Math.max(...last7.map(d => TRACK_ITEMS.reduce((s,t) => s+(d[t.id]||0), 0)), 1);
+  return (
+    <div style={{ display: "flex", alignItems: "flex-end", gap: 3, height: 40 }}>
+      {last7.map((d, i) => {
+        const total = TRACK_ITEMS.reduce((s,t) => s+(d[t.id]||0), 0);
+        const heightPct = (total / maxTotal) * 100;
+        return (
+          <div key={i} style={{ flex: 1, height: `${heightPct}%`, display: "flex", flexDirection: "column-reverse", borderRadius: "3px 3px 0 0", overflow: "hidden", minHeight: 2 }}>
+            {TRACK_ITEMS.map(t => {
+              const pct = total > 0 ? ((d[t.id]||0) / total) * 100 : 0;
+              if (pct < 0.5) return null;
+              return <div key={t.id} style={{ height: `${pct}%`, background: t.color }} />;
+            })}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── 使用量カード（ホーム） ───────────────────────────
+function UsageCard({ type, todayUsage, history, onClick }) {
+  return (
+    <div onClick={onClick} style={{
+      background: "linear-gradient(135deg, #e8f4ff 0%, #d4e8ff 100%)",
+      borderRadius: 20, padding: "12px 16px", flex: 1,
+      boxShadow: "0 4px 12px rgba(140,180,255,0.2)",
+      border: "2px solid rgba(255,255,255,0.8)",
+      cursor: "pointer",
+    }}>
+      <div style={{ fontSize: 12, fontWeight: 700, color: "#5577cc", marginBottom: 8 }}>
+        {type === "today" ? "\u4ECA\u65E5\u306E\u4F7F\u7528\u91CF" : "\u4ECA\u307E\u3067\u306E\u4F7F\u7528\u91CF"}
+      </div>
+      {type === "today"
+        ? <MiniStackBar todayUsage={todayUsage} />
+        : <MiniHistoryBars history={history} />
+      }
+    </div>
+  );
+}
+
+// ─── 今日の使用量画面 ────────────────────────────────
+function TodayUsageScreen({ todayUsage, onBack }) {
+  const total = TRACK_ITEMS.reduce((s, t) => s + (todayUsage[t.id] || 0), 0);
+  const maxSec = Math.max(...TRACK_ITEMS.map(t => todayUsage[t.id] || 0), 1);
+  return (
+    <div style={{ minHeight: "100vh", background: "linear-gradient(160deg, #e8f4ff 0%, #f0e8ff 100%)", fontFamily: "'Hiragino Maru Gothic Pro', sans-serif", maxWidth: 400, margin: "0 auto" }}>
+      <div style={{ padding: "16px 16px 12px", background: "rgba(255,255,255,0.75)", backdropFilter: "blur(10px)", borderBottom: "1px solid rgba(200,200,255,0.3)", display: "flex", alignItems: "center", gap: 12, position: "sticky", top: 0, zIndex: 10 }}>
+        <button onClick={onBack} style={{ background: "linear-gradient(135deg, #ffb3c8, #ff9eb5)", border: "none", borderRadius: 20, padding: "6px 14px", fontSize: 12, fontWeight: 700, color: "white", cursor: "pointer" }}>{"\u{1F3E0}"} \u623B\u308B</button>
+        <div style={{ fontSize: 16, fontWeight: 800, color: "#5566cc" }}>{"\u{1F4CA}"} \u4ECA\u65E5\u306E\u4F7F\u7528\u91CF</div>
+        <div style={{ marginLeft: "auto", fontSize: 11, color: "#aaa" }}>\u5408\u8A08 {fmtSec(total)}</div>
+      </div>
+      <div style={{ padding: "20px 16px", display: "flex", flexDirection: "column", gap: 14 }}>
+        {total > 0 && (
+          <div style={{ background: "white", borderRadius: 16, padding: "12px 16px", boxShadow: "0 2px 10px rgba(140,160,255,0.12)" }}>
+            <div style={{ fontSize: 12, color: "#aaa", marginBottom: 8 }}>\u5185\u8A33</div>
+            <div style={{ display: "flex", height: 16, borderRadius: 8, overflow: "hidden" }}>
+              {TRACK_ITEMS.map(t => {
+                const pct = ((todayUsage[t.id] || 0) / total) * 100;
+                if (pct < 0.5) return null;
+                return <div key={t.id} style={{ width: `${pct}%`, background: t.color }} />;
+              })}
+            </div>
+          </div>
+        )}
+        {TRACK_ITEMS.map(t => {
+          const sec = todayUsage[t.id] || 0;
+          const pct = (sec / maxSec) * 100;
+          return (
+            <div key={t.id} style={{ background: "white", borderRadius: 16, padding: "14px 16px", boxShadow: "0 2px 10px rgba(140,160,255,0.1)", border: "2px solid rgba(220,230,255,0.5)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: "#444" }}>{t.label}</span>
+                <span style={{ fontSize: 13, color: "#888", fontVariantNumeric: "tabular-nums" }}>{fmtSec(sec)}</span>
+              </div>
+              <div style={{ background: "#f0f4ff", borderRadius: 6, height: 10, overflow: "hidden" }}>
+                <div style={{ width: `${pct}%`, height: "100%", background: t.color, borderRadius: 6, transition: "width 0.6s ease" }} />
+              </div>
+            </div>
+          );
+        })}
+        {total === 0 && (
+          <div style={{ textAlign: "center", color: "#ccc", marginTop: 40, fontSize: 14 }}>
+            <div style={{ fontSize: 40, marginBottom: 8 }}>{"\u{1F338}"}</div>
+            \u307E\u3060\u8A18\u9332\u304C\u306A\u3044\u3088\uFF01
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── 今までの使用量画面 ──────────────────────────────
+function HistoryUsageScreen({ history, onBack }) {
+  const allDays = [...history].reverse();
+  return (
+    <div style={{ minHeight: "100vh", background: "linear-gradient(160deg, #e8f4ff 0%, #f0e8ff 100%)", fontFamily: "'Hiragino Maru Gothic Pro', sans-serif", maxWidth: 400, margin: "0 auto" }}>
+      <div style={{ padding: "16px 16px 12px", background: "rgba(255,255,255,0.75)", backdropFilter: "blur(10px)", borderBottom: "1px solid rgba(200,200,255,0.3)", display: "flex", alignItems: "center", gap: 12, position: "sticky", top: 0, zIndex: 10 }}>
+        <button onClick={onBack} style={{ background: "linear-gradient(135deg, #ffb3c8, #ff9eb5)", border: "none", borderRadius: 20, padding: "6px 14px", fontSize: 12, fontWeight: 700, color: "white", cursor: "pointer" }}>{"\u{1F3E0}"} \u623B\u308B</button>
+        <div style={{ fontSize: 16, fontWeight: 800, color: "#5566cc" }}>{"\u{1F4C8}"} \u4ECA\u307E\u3067\u306E\u4F7F\u7528\u91CF</div>
+        <div style={{ marginLeft: "auto", fontSize: 11, color: "#aaa" }}>{allDays.length}\u65E5\u5206</div>
+      </div>
+      <div style={{ padding: "12px 16px 4px", display: "flex", flexWrap: "wrap", gap: 8 }}>
+        {TRACK_ITEMS.map(t => (
+          <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <div style={{ width: 10, height: 10, borderRadius: 2, background: t.color }} />
+            <span style={{ fontSize: 11, color: "#777" }}>{t.label}</span>
+          </div>
+        ))}
+      </div>
+      <div style={{ padding: "8px 16px 32px", display: "flex", flexDirection: "column", gap: 10 }}>
+        {allDays.length === 0 && (
+          <div style={{ textAlign: "center", color: "#ccc", marginTop: 40, fontSize: 14 }}>
+            <div style={{ fontSize: 40, marginBottom: 8 }}>{"\u{1F4C5}"}</div>
+            \u307E\u3060\u8A18\u9332\u304C\u306A\u3044\u3088\uFF01
+          </div>
+        )}
+        {allDays.map(d => {
+          const total = TRACK_ITEMS.reduce((s, t) => s + (d[t.id] || 0), 0);
+          return (
+            <div key={d.date} style={{ background: "white", borderRadius: 16, padding: "12px 16px", boxShadow: "0 2px 10px rgba(140,160,255,0.1)", border: "2px solid rgba(220,230,255,0.5)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: "#555" }}>{d.date}</span>
+                <span style={{ fontSize: 12, color: "#aaa" }}>\u5408\u8A08 {fmtSec(total)}</span>
+              </div>
+              {total > 0 ? (
+                <div style={{ display: "flex", height: 18, borderRadius: 8, overflow: "hidden" }}>
+                  {TRACK_ITEMS.map(t => {
+                    const pct = (d[t.id] || 0) / total * 100;
+                    if (pct < 0.5) return null;
+                    return <div key={t.id} title={`${t.label}: ${fmtSec(d[t.id]||0)}`} style={{ width: `${pct}%`, background: t.color }} />;
+                  })}
+                </div>
+              ) : (
+                <div style={{ height: 18, background: "#f5f5f5", borderRadius: 8 }} />
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─── メモ画面 ────────────────────────────────────────
+function MemoScreen({ app, onBack }) {
+  const storageKey = STORAGE_KEYS[app.id] || `memo_posts_${app.id}`;
+  const [posts, setPosts] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(storageKey) || "[]"); }
+    catch { return []; }
+  });
+  const [input, setInput] = useState("");
+  const post = () => {
+    if (!input.trim()) return;
+    const updated = [{ id: Date.now(), text: input.trim(),
+      time: new Date().toLocaleTimeString("ja-JP", { hour:"2-digit", minute:"2-digit" }) }, ...posts];
+    setPosts(updated);
+    localStorage.setItem(storageKey, JSON.stringify(updated));
+    setInput("");
+  };
+  const deletePost = (id) => {
+    const updated = posts.filter(p => p.id !== id);
+    setPosts(updated);
+    localStorage.setItem(storageKey, JSON.stringify(updated));
+  };
+  return (
+    <div style={{ minHeight:"100vh", background:"linear-gradient(160deg,#f0f0ff 0%,#fff0f8 100%)", fontFamily:"'Hiragino Maru Gothic Pro',sans-serif", display:"flex", flexDirection:"column", maxWidth:400, margin:"0 auto" }}>
+      <div style={{ padding:"16px 16px 12px", background:"rgba(255,255,255,0.75)", backdropFilter:"blur(10px)", borderBottom:"1px solid rgba(200,200,255,0.3)", display:"flex", alignItems:"center", gap:12, position:"sticky", top:0, zIndex:10 }}>
+        <button onClick={onBack} style={{ background:"linear-gradient(135deg,#ffb3c8,#ff9eb5)", border:"none", borderRadius:20, padding:"6px 14px", fontSize:12, fontWeight:700, color:"white", cursor:"pointer" }}>{"\u{1F3E0}"} \u623B\u308B</button>
+        <div style={{ fontSize:16, fontWeight:800, color:"#5566cc" }}>{app.emoji} {app.label} \u30E1\u30E2</div>
+        <div style={{ marginLeft:"auto", fontSize:11, color:"#aaa" }}>{posts.length}\u4EF6</div>
+      </div>
+      <div style={{ padding:"12px 16px", background:"rgba(255,255,255,0.8)", backdropFilter:"blur(10px)", borderBottom:"1px solid rgba(200,200,255,0.3)", display:"flex", gap:8 }}>
+        <textarea value={input} onChange={e=>setInput(e.target.value)}
+          onKeyDown={e=>{ if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();post();} }}
+          placeholder="\u3044\u307E\u306A\u306B\u3057\u3066\u308B\uFF1F" rows={2}
+          style={{ flex:1, borderRadius:16, border:"2px solid rgba(180,200,255,0.6)", padding:"10px 14px", fontSize:14, fontFamily:"'Hiragino Maru Gothic Pro',sans-serif", resize:"none", outline:"none", background:"rgba(240,245,255,0.8)", color:"#333", lineHeight:1.5 }} />
+        <button onClick={post} style={{ background:"linear-gradient(135deg,#a0c4ff,#7eb0ff)", border:"none", borderRadius:16, padding:"0 18px", fontSize:20, cursor:"pointer", color:"white" }}>{"\u2191"}</button>
+      </div>
+      <div style={{ flex:1, overflowY:"auto", padding:"12px 16px", display:"flex", flexDirection:"column", gap:10 }}>
+        {posts.length===0 && <div style={{ textAlign:"center",color:"#ccc",marginTop:60,fontSize:14 }}><div style={{fontSize:40,marginBottom:8}}>{"\u{1F338}"}</div>\u307E\u3060\u6295\u7A3F\u304C\u306A\u3044\u3088\uFF01</div>}
+        {posts.map(p=>(
+          <div key={p.id} style={{ background:"white", borderRadius:16, padding:"12px 14px", boxShadow:"0 2px 10px rgba(140,160,255,0.15)", border:"2px solid rgba(200,220,255,0.5)", animation:"slideDown 0.3s ease" }}>
+            <div style={{ fontSize:14, color:"#333", lineHeight:1.6, whiteSpace:"pre-wrap" }}>{p.text}</div>
+            <div style={{ marginTop:6, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+              <span style={{ fontSize:11, color:"#bbb" }}>{p.time}</span>
+              <button onClick={()=>deletePost(p.id)} style={{ background:"none",border:"none",cursor:"pointer",fontSize:14,color:"#ddd",padding:"2px 4px" }}>{"\u2715"}</button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── ADHDポモドーロ画面 ──────────────────────────────
+// 設定: 集中25分 / 短休憩5分 / 長休憩15分 / 4セットで長休憩
+// 自動で次フェーズへ進行、セッションカウント表示、通知音付き
+function PomodoroScreen({ onBack, onStop, addUsage }) {
+  const FOCUS = 25 * 60;
+  const SHORT_BREAK = 5 * 60;
+  const LONG_BREAK = 15 * 60;
+  const SETS_BEFORE_LONG = 4;
+
+  const [phase, setPhase] = useState("focus");       // "focus" | "shortBreak" | "longBreak"
+  const [timeLeft, setTimeLeft] = useState(FOCUS);
+  const [running, setRunning] = useState(false);
+  const [sessionCount, setSessionCount] = useState(0);
+  const focusStartRef = useRef(null);   // 現在の集中セグメント開始時刻
+  const savedFocusRef = useRef(0);      // すでに記録済みの累計集中秒数
+
+  // Wake Lock: タイマー動作中のみ有効
+  useWakeLock(running);
+
+  // タイマーカウントダウン
+  useEffect(() => {
+    if (!running) return;
+    const ref = setInterval(() => {
+      setTimeLeft(t => {
+        if (t <= 1) {
+          playNotificationSound();
+          if (phase === "focus") {
+            // 集中完了 → 記録
+            if (focusStartRef.current) {
+              const seg = Math.floor((Date.now() - focusStartRef.current) / 1000);
+              savedFocusRef.current += seg;
+              if (addUsage) addUsage("study", seg);
+              focusStartRef.current = null;
+            }
+            const newCount = sessionCount + 1;
+            setSessionCount(newCount);
+            if (newCount % SETS_BEFORE_LONG === 0) {
+              setPhase("longBreak");
+              return LONG_BREAK;
+            } else {
+              setPhase("shortBreak");
+              return SHORT_BREAK;
+            }
+          } else {
+            // 休憩終了 → 自動で次の集中へ
+            setPhase("focus");
+            focusStartRef.current = Date.now();
+            return FOCUS;
+          }
+        }
+        return t - 1;
+      });
+    }, 1000);
+    return () => clearInterval(ref);
+  }, [running, phase, sessionCount]);
+
+  const handleToggle = () => {
+    if (running) {
+      // 一時停止: 集中中なら部分時間を記録
+      if (phase === "focus" && focusStartRef.current) {
+        const seg = Math.floor((Date.now() - focusStartRef.current) / 1000);
+        savedFocusRef.current += seg;
+        if (addUsage) addUsage("study", seg);
+        focusStartRef.current = null;
+      }
+    } else {
+      // 再開: 集中フェーズなら開始時刻を記録
+      if (phase === "focus") {
+        focusStartRef.current = Date.now();
+      }
+    }
+    setRunning(r => !r);
+  };
+
+  const handleReset = () => {
+    setRunning(false);
+    setPhase("focus");
+    setTimeLeft(FOCUS);
+    focusStartRef.current = null;
+  };
+
+  const handleGoHome = () => {
+    // 動作中の集中時間を記録
+    if (running && phase === "focus" && focusStartRef.current) {
+      const seg = Math.floor((Date.now() - focusStartRef.current) / 1000);
+      if (addUsage) addUsage("study", seg);
+    }
+    onStop();
+    onBack();
+  };
+
+  const fmt = s => `${String(Math.floor(s/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`;
+
+  const getPhaseTotal = () => {
+    if (phase === "focus") return FOCUS;
+    if (phase === "shortBreak") return SHORT_BREAK;
+    return LONG_BREAK;
+  };
+  const total = getPhaseTotal();
+  const progress = ((total - timeLeft) / total) * 100;
+
+  const bgColor = phase === "focus"
+    ? "linear-gradient(160deg,#e8f5e0 0%,#d0f0c0 100%)"
+    : phase === "shortBreak"
+      ? "linear-gradient(160deg,#f5e8ff 0%,#e0d0ff 100%)"
+      : "linear-gradient(160deg,#e0f0ff 0%,#c8e0ff 100%)";
+
+  const strokeColor = phase === "focus" ? "#7ec870" : phase === "shortBreak" ? "#b088e8" : "#70a8d8";
+  const labelColor = phase === "focus" ? "#66aa44" : phase === "shortBreak" ? "#9966cc" : "#5588bb";
+
+  const phaseLabel = phase === "focus"
+    ? "\u{1F338} \u96C6\u4E2D\u30BF\u30A4\u30E0"
+    : phase === "shortBreak"
+      ? "\u{1F375} \u4F11\u61A9\u30BF\u30A4\u30E0"
+      : "\u{1F3D6}\uFE0F \u30ED\u30F3\u30B0\u4F11\u61A9";
+
+  // セッションドットインジケーター
+  const currentSetPosition = sessionCount % SETS_BEFORE_LONG;
+  const dots = [];
+  for (let i = 0; i < SETS_BEFORE_LONG; i++) {
+    const isDone = i < currentSetPosition;
+    const isCurrent = i === currentSetPosition && phase === "focus";
+    dots.push(
+      <div key={i} style={{
+        width: 12, height: 12, borderRadius: "50%",
+        background: isDone ? strokeColor : isCurrent ? "rgba(255,255,255,0.9)" : "rgba(200,200,200,0.3)",
+        border: isCurrent ? `2px solid ${strokeColor}` : "2px solid transparent",
+        transition: "all 0.3s ease",
+      }} />
+    );
+  }
+
+  return (
+    <div style={{
+      minHeight: "100vh", background: bgColor,
+      display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+      fontFamily: "'Hiragino Maru Gothic Pro',sans-serif", gap: 20, padding: 24,
+      transition: "background 1s ease",
+    }}>
+      {/* フェーズラベル */}
+      <div style={{
+        fontSize: 14, fontWeight: 700, color: labelColor,
+        background: "rgba(255,255,255,0.7)", borderRadius: 20, padding: "6px 18px", letterSpacing: 2,
+      }}>
+        {phaseLabel}
+      </div>
+
+      {/* セッションカウンター */}
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <div style={{ display: "flex", gap: 6 }}>{dots}</div>
+        <span style={{ fontSize: 12, color: "#999", marginLeft: 4 }}>
+          {sessionCount}\u30BB\u30C3\u30B7\u30E7\u30F3\u5B8C\u4E86
+        </span>
+      </div>
+
+      {/* プログレスリング */}
+      <div style={{ position: "relative", width: 200, height: 200 }}>
+        <svg width="200" height="200" style={{ transform: "rotate(-90deg)" }}>
+          <circle cx="100" cy="100" r="88" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="12"/>
+          <circle cx="100" cy="100" r="88" fill="none" stroke={strokeColor}
+            strokeWidth="12" strokeDasharray={`${2*Math.PI*88}`}
+            strokeDashoffset={`${2*Math.PI*88*(1-progress/100)}`} strokeLinecap="round"
+            style={{ transition: "stroke-dashoffset 1s linear" }}/>
+        </svg>
+        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ fontSize: 48, fontWeight: 800, color: "#333", fontVariantNumeric: "tabular-nums", letterSpacing: 2 }}>
+            {fmt(timeLeft)}
+          </div>
+        </div>
+      </div>
+
+      {/* 操作ボタン */}
+      <div style={{ display: "flex", gap: 12 }}>
+        <button onClick={handleToggle} style={{
+          background: running
+            ? "linear-gradient(135deg,#ffb3c8,#ff9eb5)"
+            : "linear-gradient(135deg,#a0d890,#7ec870)",
+          border: "none", borderRadius: 50, padding: "14px 36px", fontSize: 16,
+          fontWeight: 700, color: "white", cursor: "pointer",
+        }}>
+          {running ? "\u23F8 \u4E00\u6642\u505C\u6B62" : "\u25B6 \u30B9\u30BF\u30FC\u30C8"}
+        </button>
+        <button onClick={handleReset} style={{
+          background: "rgba(255,255,255,0.7)", border: "2px solid rgba(200,200,200,0.5)",
+          borderRadius: 50, padding: "14px 20px", fontSize: 16, cursor: "pointer", color: "#aaa",
+        }}>{"\u21BA"}</button>
+      </div>
+
+      {/* スキップボタン */}
+      {running && phase !== "focus" && (
+        <button onClick={() => {
+          playNotificationSound();
+          setPhase("focus");
+          setTimeLeft(FOCUS);
+        }} style={{
+          background: "rgba(255,255,255,0.6)", border: "1px solid rgba(200,200,200,0.4)",
+          borderRadius: 20, padding: "8px 20px", fontSize: 12, fontWeight: 600,
+          cursor: "pointer", color: "#888",
+        }}>
+          {"\u23ED"} \u4F11\u61A9\u30B9\u30AD\u30C3\u30D7
+        </button>
+      )}
+
+      {/* ホームに戻る */}
+      <button onClick={handleGoHome} style={{
+        background: "none", border: "none", cursor: "pointer", fontSize: 13,
+        color: "#aaa", textDecoration: "underline",
+      }}>{"\u{1F3E0}"} \u30DB\u30FC\u30E0\u306B\u623B\u308B</button>
+    </div>
+  );
+}
+
+// ─── タイマー画面（Wake Lock対応） ──────────────────
+function TimerScreen({ mode, startTime, onStop, onBack }) {
+  const [elapsed, setElapsed] = useState(() => Math.floor((Date.now()-startTime)/1000));
+
+  // Wake Lock: タイマー動作中は常に有効
+  useWakeLock(true);
+
+  useEffect(() => {
+    const ref = setInterval(() => setElapsed(Math.floor((Date.now()-startTime)/1000)), 1000);
+    return () => clearInterval(ref);
+  }, [startTime]);
+
+  const fmt = s => {
+    const h=Math.floor(s/3600), m=Math.floor((s%3600)/60), sec=s%60;
+    return h>0
+      ? `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:${String(sec).padStart(2,"0")}`
+      : `${String(m).padStart(2,"0")}:${String(sec).padStart(2,"0")}`;
+  };
+
+  return (
+    <div style={{
+      minHeight: "100vh", background: `linear-gradient(160deg,${mode.color} 0%,white 100%)`,
+      display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+      fontFamily: "'Hiragino Maru Gothic Pro',sans-serif", gap: 28, padding: 24,
+    }}>
+      <div style={{ fontSize: 72, filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.1))", animation: "pulse 2s ease-in-out infinite" }}>{mode.character}</div>
+      <div style={{
+        background: "rgba(255,255,255,0.8)", borderRadius: 24, padding: "24px 48px", textAlign: "center",
+        boxShadow: "0 8px 32px rgba(0,0,0,0.08)", border: "2px solid rgba(255,255,255,0.9)",
+      }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: "#888", marginBottom: 8, letterSpacing: 1 }}>{mode.label}</div>
+        <div style={{ fontSize: 52, fontWeight: 800, color: "#444", letterSpacing: 2, fontVariantNumeric: "tabular-nums" }}>{fmt(elapsed)}</div>
+      </div>
+      <button onClick={() => { onStop(elapsed); onBack(); }} style={{
+        background: "linear-gradient(135deg,#ffb3c8,#ff9eb5)", border: "none", borderRadius: 50,
+        padding: "14px 36px", fontSize: 16, fontWeight: 700, color: "white", cursor: "pointer",
+      }}>{"\u{1F3E0}"} \u30DB\u30FC\u30E0\u306B\u623B\u308B</button>
+    </div>
+  );
+}
+
+// ─── メイン ──────────────────────────────────────────
+function App() {
+  const [screen, setScreen] = useState(null);
+  const [timerStartTime, setTimerStartTime] = useState(null);
+  const [todayUsage, setTodayUsage] = useState(() => loadTodayUsage());
+  const [history, setHistory] = useState(() => loadHistory());
+  const [homeStartTime, setHomeStartTime] = useState(() => Date.now());
+
+  const addUsage = useCallback((id, seconds) => {
+    if (seconds <= 0) return;
+    setTodayUsage(prev => {
+      const updated = { ...prev, [id]: (prev[id] || 0) + seconds };
+      saveTodayUsage(updated);
+      flushTodayToHistory(updated);
+      return updated;
+    });
+    setHistory(loadHistory());
+  }, []);
+
+  const leaveHome = () => {
+    const elapsed = Math.floor((Date.now() - homeStartTime) / 1000);
+    addUsage("interval", elapsed);
+  };
+
+  const handleModeClick = (mode) => {
+    leaveHome();
+    if (mode.screen === "timer") setTimerStartTime(Date.now());
+    setScreen({ type: mode.screen, data: mode });
+  };
+
+  const backToHome = () => {
+    setHomeStartTime(Date.now());
+    setScreen(null);
+  };
+
+  if (screen?.type === "today")   return <TodayUsageScreen todayUsage={todayUsage} onBack={backToHome} />;
+  if (screen?.type === "history") return <HistoryUsageScreen history={history} onBack={backToHome} />;
+  if (screen?.type === "sns") {
+    const appStartTime = screen.startTime;
+    return <MemoScreen app={screen.data} onBack={() => {
+      const elapsed = Math.floor((Date.now() - appStartTime) / 1000);
+      addUsage(screen.data.id, elapsed);
+      backToHome();
+    }} />;
+  }
+  if (screen?.type === "pomodoro") return <PomodoroScreen onBack={backToHome} onStop={() => {}} addUsage={addUsage} />;
+  if (screen?.type === "timer") return (
+    <TimerScreen mode={screen.data} startTime={timerStartTime}
+      onStop={(elapsed) => addUsage(screen.data.id, elapsed)}
+      onBack={backToHome} />
+  );
+
+  // ─── ホーム画面 ──────────────────────────────────────
+  return (
+    <div style={{
+      minHeight: "100vh",
+      background: "linear-gradient(160deg,#e8f0ff 0%,#f5e8ff 50%,#fff0f8 100%)",
+      fontFamily: "'Hiragino Maru Gothic Pro','Rounded Mplus 1c',sans-serif",
+      padding: "16px 12px 32px", maxWidth: 400, margin: "0 auto",
+    }}>
+      {/* SNS・Firefoxボタン */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 12 }}>
+        {APPS.map(app => (
+          <div key={app.id} onClick={() => { leaveHome(); setScreen({ type:"sns", data:app, startTime: Date.now() }); }} style={{
+            background: app.color, borderRadius: 16, display: "flex", flexDirection: "column",
+            alignItems: "center", justifyContent: "center",
+            height: 68, fontSize: 13, fontWeight: 700,
+            color: app.textColor || "#333", cursor: "pointer",
+            boxShadow: "0 2px 10px rgba(0,0,0,0.12)", gap: 4,
+            border: "2px solid rgba(255,255,255,0.6)",
+          }}>
+            <span style={{ fontSize: 24 }}>{app.emoji}</span>
+            <span>{app.label}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* 使用量カード */}
+      <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
+        <UsageCard type="history" todayUsage={todayUsage} history={history} onClick={() => { leaveHome(); setScreen({ type:"history" }); }} />
+        <UsageCard type="today"   todayUsage={todayUsage} history={history} onClick={() => { leaveHome(); setScreen({ type:"today" }); }} />
+      </div>
+
+      {/* モードボタン */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8, marginBottom: 12 }}>
+        {MODES.map(mode => (
+          <div key={mode.id} onClick={() => handleModeClick(mode)} style={{
+            background: `linear-gradient(135deg,${mode.color} 60%,white)`,
+            borderRadius: 18, display: "flex", flexDirection: "column",
+            alignItems: "center", justifyContent: "center",
+            padding: "14px 4px", cursor: "pointer",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+            border: "2px solid rgba(255,255,255,0.8)",
+            transition: "all 0.2s ease", gap: 6,
+          }}>
+            <span style={{ fontSize: 28 }}>{mode.character}</span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: "#555" }}>{mode.label}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* 空き地 */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8 }}>
+        {[0,1,2,3].map(i => (
+          <div key={i} style={{
+            borderRadius: 16,
+            border: `2px dashed ${["#b0d4a0","#a0c4f0","#f0d0a0","#d0b0f0"][i]}`,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            height: 80, fontSize: 13, color: "#bbb", cursor: "pointer",
+            background: "rgba(255,255,255,0.5)",
+          }}>\u7A7A\u304D\u5730</div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── レンダー ────────────────────────────────────────
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+</script>
+</body>
+</html>
