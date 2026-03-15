@@ -638,14 +638,14 @@ function PomodoroScreen({ onBack, onStop, addUsage }) {
           timerDisplay.textContent = '00:00'; setProgress(0, '#FF7A00'); setStatus('待機中...', 'status-standby');
           btnMain.innerHTML = '▶'; btnMain.classList.remove('break-mode');
           btnReset.disabled = true; btnSkip.disabled = true;
-          descText.innerHTML = 'ADHDポモドーロはADHDの「先延ばし」を防止するADHD向け作業タイマーです！<br>まずは上の再生ボタンを押して1分間だけのアイドリング作業を実施しましょう！<br>1分だけ作業した後は休憩もできるのでまずは1分!';
+          descText.innerHTML = 'お帰りなさい！今日も頑張りましょう';
           iconDeco.textContent = '🧑‍💻'; break;
         case 'idling':
           timerDisplay.textContent = formatTime(workTotal); setProgress(elapsed / IDLING_SEC, '#FF7A00');
           setStatus('アイドリング中...', 'status-idling');
           btnMain.innerHTML = isPaused ? '▶' : '⏸'; btnMain.classList.remove('break-mode');
           btnReset.disabled = false; btnSkip.disabled = true;
-          descText.innerHTML = 'アイドリング作業中！まず1分だけ頑張りましょう。<br>1分たったら続行か休憩かを選べます。';
+          descText.innerHTML = 'まずは1分間頑張ってみましょう！<br>1分後に休憩か続行か選べます';
           iconDeco.textContent = '🧑‍💻'; break;
         case 'choice':
           timerDisplay.textContent = formatTime(workTotal); setProgress(1, '#FF7A00');
@@ -659,14 +659,14 @@ function PomodoroScreen({ onBack, onStop, addUsage }) {
           setStatus('作業中', 'status-working');
           btnMain.innerHTML = isPaused ? '▶' : '⏸'; btnMain.classList.remove('break-mode');
           btnReset.disabled = false; btnSkip.disabled = false;
-          descText.innerHTML = 'ナイス継続です！この調子で気の向くまで存分に作業を実施しましょう。<br>中央のスキップボタンを押すと休憩に入ることができます。';
+          descText.innerHTML = 'その調子！疲れたらスキップボタンで休憩しましょう！';
           iconDeco.textContent = '🧑‍💻'; break;
         case 'break':
           timerDisplay.textContent = formatTime(elapsed); setProgress(1, '#4EA8DE');
           setStatus('休憩中', 'status-break');
           btnMain.innerHTML = isPaused ? '▶' : '⏸'; btnMain.classList.add('break-mode');
           btnReset.disabled = false; btnSkip.disabled = false;
-          descText.innerHTML = 'ゆっくり休憩しましょう。時間制限はありません。<br>準備できたらスキップで次のアイドリング作業へ。';
+          descText.innerHTML = 'ゆっくり休憩しましょう。休憩できたら、スキップボタンでアイドリングへ';
           iconDeco.textContent = '☕'; break;
       }
       if (workTotal > 0) {
