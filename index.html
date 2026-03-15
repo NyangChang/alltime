@@ -473,7 +473,6 @@ function PomodoroScreen({ onBack, onStop, addUsage }) {
       return (now - phaseStartTime - paused) / 1000;
     }
     function markPhaseStart() { phaseStartTime = performance.now(); pausedAccum = 0; pauseStartTime = null; }
-    function apomoTodayStr() { return new Date().toLocaleDateString('sv'); }
 
     function setStatus(text, cls) {
       timerStatus.textContent = text;
@@ -486,14 +485,14 @@ function PomodoroScreen({ onBack, onStop, addUsage }) {
 
     function saveApomoHistory() {
       const hist = JSON.parse(localStorage.getItem(HISTORY_KEY) || '{}');
-      hist[apomoTodayStr()] = workTotal;
+      hist[todayStr()] = workTotal;
       localStorage.setItem(HISTORY_KEY, JSON.stringify(hist));
     }
     function saveState() {
-      localStorage.setItem(STATE_KEY, JSON.stringify({ phase, elapsed, workTotal, isPaused, savedAt: Date.now(), savedDate: apomoTodayStr() }));
+      localStorage.setItem(STATE_KEY, JSON.stringify({ phase, elapsed, workTotal, isPaused, savedAt: Date.now(), savedDate: todayStr() }));
     }
     function loadState() {
-      const today = apomoTodayStr();
+      const today = todayStr();
       const hist = JSON.parse(localStorage.getItem(HISTORY_KEY) || '{}');
       let s;
       try { s = JSON.parse(localStorage.getItem(STATE_KEY) || 'null'); } catch { s = null; }
@@ -515,12 +514,12 @@ function PomodoroScreen({ onBack, onStop, addUsage }) {
     // Shindoi
     function saveShindoi() {
       const data = JSON.parse(localStorage.getItem(SHINDOI_KEY) || '{}');
-      data[apomoTodayStr()] = { taps: shindoiCount, explosions: explosionCount };
+      data[todayStr()] = { taps: shindoiCount, explosions: explosionCount };
       localStorage.setItem(SHINDOI_KEY, JSON.stringify(data));
     }
     function loadShindoi() {
       const data = JSON.parse(localStorage.getItem(SHINDOI_KEY) || '{}');
-      const today = data[apomoTodayStr()];
+      const today = data[todayStr()];
       if (today) { shindoiCount = today.taps || 0; explosionCount = today.explosions || 0; }
     }
     function lerpColor(c1, c2, t) {
@@ -597,35 +596,45 @@ function PomodoroScreen({ onBack, onStop, addUsage }) {
       });
       gain.gain.setValueAtTime(0.18, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+      setTimeout(() => ctx.close(), 500);
     }
 
     // Phase transitions
     function startIdling() {
       clearTick(); phase = 'idling'; elapsed = 0; isPaused = false; markPhaseStart();
-      tickInterval = setInterval(tick, 1000); setWakeLockActive(true); render();
+      saveState(); tickInterval = setInterval(tick, 1000); setWakeLockActive(true); render();
     }
     function startWorking() {
       clearTick(); phase = 'working'; elapsed = 0; isPaused = false; markPhaseStart();
-      tickInterval = setInterval(tick, 1000); setWakeLockActive(true); render();
+      saveState(); tickInterval = setInterval(tick, 1000); setWakeLockActive(true); render();
     }
     function startBreak() {
       clearTick(); phase = 'break'; elapsed = 0; isPaused = false; markPhaseStart();
-      tickInterval = setInterval(tick, 1000); setWakeLockActive(true); render();
+      saveState(); tickInterval = setInterval(tick, 1000); setWakeLockActive(true); render();
     }
-    function showChoice() { clearTick(); phase = 'choice'; isPaused = false; playCoinSound(); render(); }
+    function showChoice() { clearTick(); phase = 'choice'; isPaused = false; saveState(); playCoinSound(); render(); }
     function reset() {
       clearTick(); phase = 'standby'; elapsed = 0; workTotal = 0; isPaused = false;
       phaseStartTime = null; pausedAccum = 0; pauseStartTime = null;
+      workTotalRef.current = 0; workTotalAtStartRef.current = 0;
       setWakeLockActive(false); saveState(); saveApomoHistory(); render();
       sessionStats.style.display = 'none';
+    }
+
+    let lastSaveAt = 0;
+    function saveIfNeeded(force) {
+      const now = Date.now();
+      if (force || now - lastSaveAt >= 30000) {
+        saveApomoHistory(); saveState(); lastSaveAt = now;
+      }
     }
 
     function tick() {
       if (isPaused) return;
       elapsed++;
-      if (phase === 'idling') { workTotal++; saveApomoHistory(); saveState(); if (elapsed >= IDLING_SEC) { showChoice(); return; } }
-      else if (phase === 'working') { workTotal++; saveApomoHistory(); saveState(); }
-      else if (phase === 'break') { saveState(); }
+      if (phase === 'idling') { workTotal++; if (elapsed >= IDLING_SEC) { saveApomoHistory(); saveState(); showChoice(); return; } }
+      else if (phase === 'working') { workTotal++; }
+      saveIfNeeded(false);
       workTotalRef.current = workTotal;
       render();
     }
@@ -711,7 +720,7 @@ function PomodoroScreen({ onBack, onStop, addUsage }) {
     rafId = requestAnimationFrame(animationLoop);
 
     // Visibility handler
-    const onVisibility = () => { if (document.visibilityState === 'hidden') saveState(); };
+    const onVisibility = () => { if (document.visibilityState === 'hidden') { saveApomoHistory(); saveState(); } };
     window.addEventListener('visibilitychange', onVisibility);
 
     // Init
