@@ -407,6 +407,7 @@ function PomodoroScreen({ onBack, onStop, addUsage }) {
   const containerRef = useRef(null);
   const cleanupRef = useRef(null);
   const workTotalRef = useRef(0);
+  const workTotalAtStartRef = useRef(0);
   const [wakeLockActive, setWakeLockActive] = useState(false);
 
   useWakeLock(wakeLockActive);
@@ -715,6 +716,7 @@ function PomodoroScreen({ onBack, onStop, addUsage }) {
 
     // Init
     loadState();
+    workTotalAtStartRef.current = workTotal;
     loadShindoi();
     updateShindoiUI();
 
@@ -745,9 +747,10 @@ function PomodoroScreen({ onBack, onStop, addUsage }) {
 
   const handleGoHome = () => {
     if (cleanupRef.current) cleanupRef.current();
-    // 勉強の作業時間を alltime 側に記録
-    if (addUsage && workTotalRef.current > 0) {
-      addUsage("study", workTotalRef.current);
+    // 勉強の作業時間を alltime 側に記録（差分のみ）
+    const delta = workTotalRef.current - workTotalAtStartRef.current;
+    if (addUsage && delta > 0) {
+      addUsage("study", delta);
     }
     setWakeLockActive(false);
     onStop();
