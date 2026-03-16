@@ -8,6 +8,7 @@ function App() {
   const [emotionModal, setEmotionModal] = React.useState(false);
   const [activeMode, setActiveMode] = React.useState(null);
   const [activeModeStart, setActiveModeStart] = React.useState(null);
+  const pomodoroTimeRef = React.useRef(0);
 
   const addUsage = React.useCallback((id, seconds) => {
     if (seconds <= 0) return;
@@ -45,7 +46,7 @@ function App() {
   const openEmotion = () => setEmotionModal(true);
   const closeEmotion = () => setEmotionModal(false);
 
-  const emotionOverlay = emotionModal ? <EmotionModal currentMode={activeMode} modeStartTime={activeModeStart} onClose={closeEmotion} /> : null;
+  const emotionOverlay = emotionModal ? <EmotionModal currentMode={activeMode} modeStartTime={activeModeStart} pomodoroTimeRef={pomodoroTimeRef} onClose={closeEmotion} /> : null;
 
   // 各画面のルーティング
   if (screen?.type === "today") return (
@@ -74,7 +75,7 @@ function App() {
   }
   if (screen?.type === "pomodoro") return (
     <React.Fragment>
-      <PomodoroScreen onBack={backToHome} onStop={() => {}} addUsage={addUsage} onOpenEmotion={openEmotion} />
+      <PomodoroScreen onBack={backToHome} onStop={() => {}} addUsage={addUsage} onOpenEmotion={openEmotion} pomodoroTimeRef={pomodoroTimeRef} />
       {emotionOverlay}
     </React.Fragment>
   );

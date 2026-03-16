@@ -1,5 +1,5 @@
 // ─── ADHDポモドーロ画面（APOMO） ──────────────────────
-window.PomodoroScreen = function PomodoroScreen({ onBack, onStop, addUsage, onOpenEmotion }) {
+window.PomodoroScreen = function PomodoroScreen({ onBack, onStop, addUsage, onOpenEmotion, pomodoroTimeRef }) {
   const containerRef = React.useRef(null);
   const cleanupRef = React.useRef(null);
   const workTotalRef = React.useRef(0);
@@ -213,6 +213,7 @@ window.PomodoroScreen = function PomodoroScreen({ onBack, onStop, addUsage, onOp
       clearTick(); phase = 'standby'; elapsed = 0; workTotal = 0; isPaused = false;
       phaseStartTime = null; pausedAccum = 0; pauseStartTime = null;
       workTotalRef.current = 0; workTotalAtStartRef.current = 0;
+      if (pomodoroTimeRef) pomodoroTimeRef.current = 0;
       setWakeLockActive(false); saveState(); saveApomoHistory(); render();
       sessionStats.style.display = 'none';
     }
@@ -232,6 +233,7 @@ window.PomodoroScreen = function PomodoroScreen({ onBack, onStop, addUsage, onOp
       else if (phase === 'working') { workTotal++; }
       saveIfNeeded(false);
       workTotalRef.current = workTotal;
+      if (pomodoroTimeRef) pomodoroTimeRef.current = workTotal;
       render();
     }
 
@@ -322,6 +324,7 @@ window.PomodoroScreen = function PomodoroScreen({ onBack, onStop, addUsage, onOp
     // Init
     loadState();
     workTotalAtStartRef.current = workTotal;
+    if (pomodoroTimeRef) pomodoroTimeRef.current = workTotal;
     loadShindoi();
     updateShindoiUI();
 

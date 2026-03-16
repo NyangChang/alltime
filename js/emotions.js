@@ -1,5 +1,5 @@
 // ─── 感情投稿モーダル ────────────────────────────────
-window.EmotionModal = function EmotionModal({ currentMode, modeStartTime, onClose }) {
+window.EmotionModal = function EmotionModal({ currentMode, modeStartTime, pomodoroTimeRef, onClose }) {
   const [posts, setPosts] = React.useState(() => loadEmotionPosts());
   const [now, setNow] = React.useState(() => Date.now());
 
@@ -24,8 +24,10 @@ window.EmotionModal = function EmotionModal({ currentMode, modeStartTime, onClos
   };
   const postEmotion = (emotion) => {
     if (!canPost(emotion.id)) return;
-    const modeElapsed = (currentMode && modeStartTime)
-      ? Math.floor((Date.now() - modeStartTime) / 1000) : null;
+    const modeElapsed = (currentMode && currentMode.id === "study" && pomodoroTimeRef)
+      ? pomodoroTimeRef.current
+      : (currentMode && modeStartTime)
+        ? Math.floor((Date.now() - modeStartTime) / 1000) : null;
     const newPost = {
       id: Date.now(), emotionId: emotion.id, timestamp: Date.now(),
       time: fmtTime(Date.now()), mode: currentMode?.label || null, modeElapsed,
@@ -52,7 +54,11 @@ window.EmotionModal = function EmotionModal({ currentMode, modeStartTime, onClos
         </div>
         {currentMode && (
           <div style={{ fontSize:11, color:"#aaa", marginBottom:16 }}>
-            {currentMode.label}中 · {fmtElapsed(currentMode && modeStartTime ? Math.floor((Date.now()-modeStartTime)/1000) : null)}
+            {currentMode.label}中 · {fmtElapsed(
+              (currentMode.id === "study" && pomodoroTimeRef)
+                ? pomodoroTimeRef.current
+                : (modeStartTime ? Math.floor((Date.now()-modeStartTime)/1000) : null)
+            )}
           </div>
         )}
         {!currentMode && <div style={{ marginBottom:16 }} />}
