@@ -26,6 +26,8 @@ window.EMOTIONS = [
   { id: "happy",       label: "楽しい",    emoji: "😄",   color: "#a0f5b0" },
   { id: "glad",        label: "嬉しい",    emoji: "🥰",   color: "#f5e0a0" },
   { id: "inspired",    label: "ひらめき",  emoji: "💡",   color: "#e0d060" },
+  { id: "approval",    label: "承認欲求",  emoji: "🫣",   color: "#d0b0f5" },
+  { id: "future_anxiety", label: "将来への不安", emoji: "😰", color: "#a0b8d8" },
 ];
 window.COOLDOWN_MS = 5 * 60 * 1000;
 window.STORAGE_KEYS = { sns: "memo_posts_sns", firefox: "memo_posts_firefox" };
