@@ -91,8 +91,9 @@
     'js/memo.js', 'js/pomodoro.js', 'js/timer.js', 'js/app.js'
   ];
   const sources = [];
+  const cacheBust = '_v=' + Date.now();
   for (const f of files) {
-    const res = await fetch(f);
+    const res = await fetch(f + '?' + cacheBust);
     sources.push(await res.text());
   }
   const combined = sources.join('\n;\n');
