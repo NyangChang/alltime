@@ -28,6 +28,9 @@ window.EMOTIONS = [
   { id: "inspired",    label: "ひらめき",  emoji: "💡",   color: "#e0d060" },
   { id: "approval",    label: "承認欲求",  emoji: "🫣",   color: "#d0b0f5" },
   { id: "future_anxiety", label: "将来への不安", emoji: "😰", color: "#a0b8d8" },
+  { id: "low_engine",  label: "エンジン不調", emoji: "🫠", color: "#c8b8a0" },
+  { id: "mendokusai",  label: "めんどくさい", emoji: "😑", color: "#b0b0b0" },
+  { id: "motivated",   label: "やる気！",     emoji: "🔥", color: "#f5a040" },
 ];
 window.COOLDOWN_MS = 5 * 60 * 1000;
 window.STORAGE_KEYS = { sns: "memo_posts_sns", firefox: "memo_posts_firefox" };
