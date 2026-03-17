@@ -224,7 +224,6 @@ window.TimelineStats = function TimelineStats({ posts }) {
                           background:"#333", color:"#fff", borderRadius:10, padding:"8px 12px",
                           fontSize:11, whiteSpace:"nowrap", zIndex:20,
                           boxShadow:"0 4px 16px rgba(0,0,0,0.25)",
-                          animation:"fadeIn 0.15s ease",
                         }}>
                           <div style={{ fontWeight:700, marginBottom:2 }}>{em.emoji} {em.label}</div>
                           <div>{it.post.time}</div>

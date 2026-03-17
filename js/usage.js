@@ -186,7 +186,6 @@ window.HistoryUsageScreen = function HistoryUsageScreen({ history, onBack }) {
                         padding:"7px 14px", fontSize:12, fontWeight:700,
                         whiteSpace:"nowrap", zIndex:20,
                         boxShadow:"0 4px 16px rgba(0,0,0,0.25)",
-                        animation:"fadeIn 0.15s ease",
                       }}>
                         <div style={{ display:"flex", alignItems:"center", gap:6 }}>
                           <div style={{ width:8, height:8, borderRadius:2, background:item.color, flexShrink:0 }} />
