@@ -279,11 +279,6 @@ window.EmotionSNSScreen = function EmotionSNSScreen({ onBack }) {
     saveEmotionPosts(updated);
   };
 
-  const stats = EMOTIONS.map(e => ({
-    ...e, count: posts.filter(p => p.emotionId === e.id).length,
-  })).sort((a, b) => b.count - a.count);
-  const maxCount = Math.max(...stats.map(s => s.count), 1);
-
   return (
     <div style={{
       minHeight:"100vh", background:"linear-gradient(160deg, #f8f0ff 0%, #fff0f8 100%)",
