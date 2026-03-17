@@ -28,9 +28,12 @@ window.EmotionModal = function EmotionModal({ currentMode, modeStartTime, pomodo
       ? pomodoroTimeRef.current
       : (currentMode && modeStartTime)
         ? Math.floor((Date.now() - modeStartTime) / 1000) : null;
+    const ts = Date.now();
+    const d = new Date(ts);
+    const dateStr = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
     const newPost = {
-      id: Date.now(), emotionId: emotion.id, timestamp: Date.now(),
-      time: fmtTime(Date.now()), mode: currentMode?.label || null, modeElapsed,
+      id: ts, emotionId: emotion.id, timestamp: ts,
+      date: dateStr, time: fmtTime(ts), mode: currentMode?.label || null, modeElapsed,
     };
     const updated = [newPost, ...posts];
     setPosts(updated);
@@ -106,6 +109,163 @@ window.FloatingPostButton = function FloatingPostButton({ onClick }) {
     }}>
       投稿
     </button>
+  );
+};
+
+// ─── タイムライン集計コンポーネント ─────────────────────
+window.TimelineStats = function TimelineStats({ posts }) {
+  const [popup, setPopup] = React.useState(null);
+
+  // 日付を導出（dateフィールドがない古いデータはtimestampから生成）
+  const getDate = (p) => {
+    if (p.date) return p.date;
+    const d = new Date(p.timestamp);
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  };
+
+  // 日付ごとにグルーピング
+  const grouped = {};
+  posts.forEach(p => {
+    const dateKey = getDate(p);
+    if (!grouped[dateKey]) grouped[dateKey] = [];
+    grouped[dateKey].push(p);
+  });
+  const sortedDates = Object.keys(grouped).sort((a, b) => b.localeCompare(a));
+
+  // 時刻→0〜24のfloat変換
+  const tsToHour = (ts) => {
+    const d = new Date(ts);
+    return d.getHours() + d.getMinutes() / 60;
+  };
+
+  // アイコン重なり回避: 同一日の投稿を時刻順にソートし、近すぎるものをずらす
+  const layoutIcons = (dayPosts) => {
+    const items = dayPosts.map(p => ({
+      post: p,
+      hour: tsToHour(p.timestamp),
+      pct: (tsToHour(p.timestamp) / 24) * 100,
+      row: 0,
+    })).sort((a, b) => a.hour - b.hour);
+
+    // 各アイコンが占める幅を%で概算（アイコン≒24px, バー幅≒280px → 約8.5%）
+    const iconWidthPct = 8;
+    for (let i = 1; i < items.length; i++) {
+      let row = 0;
+      for (let j = 0; j < i; j++) {
+        if (items[j].row === row && Math.abs(items[i].pct - items[j].pct) < iconWidthPct) {
+          row++;
+          j = -1; // restart check
+        }
+      }
+      items[i].row = row;
+    }
+    return items;
+  };
+
+  const maxRows = (items) => Math.max(0, ...items.map(it => it.row)) + 1;
+
+  // 日付の表示フォーマット
+  const fmtDate = (dateStr) => {
+    const [y, m, d] = dateStr.split('-');
+    return `${y}-${Number(m)}-${Number(d)}`;
+  };
+
+  return (
+    <div style={{ flex:1, overflowY:"auto", padding:"16px 16px", display:"flex", flexDirection:"column", gap:16 }}>
+      <div style={{ fontSize:12, color:"#aaa", marginBottom:0 }}>日別タイムライン</div>
+      {sortedDates.length === 0 && (
+        <div style={{ textAlign:"center", color:"#ccc", marginTop:60, fontSize:14 }}>
+          <div style={{ fontSize:40, marginBottom:8 }}>📊</div>
+          まだデータがないよ！
+        </div>
+      )}
+      {sortedDates.map(dateKey => {
+        const dayPosts = grouped[dateKey];
+        const items = layoutIcons(dayPosts);
+        const rows = maxRows(items);
+        const iconAreaHeight = rows * 30;
+
+        return (
+          <div key={dateKey} style={{
+            background:"white", borderRadius:14, padding:"12px 14px 10px",
+            boxShadow:"0 2px 8px rgba(180,140,255,0.1)",
+          }}>
+            <div style={{ fontSize:13, fontWeight:700, color:"#7755cc", marginBottom:6 }}>
+              {fmtDate(dateKey)}
+              <span style={{ fontSize:11, fontWeight:400, color:"#bbb", marginLeft:8 }}>{dayPosts.length}件</span>
+            </div>
+            {/* アイコンエリア + バー */}
+            <div style={{ position:"relative", marginLeft:28, marginRight:28 }}>
+              {/* アイコン群 */}
+              <div style={{ position:"relative", height: iconAreaHeight, marginBottom:2 }}>
+                {items.map(it => {
+                  const em = EMOTIONS.find(e => e.id === it.post.emotionId);
+                  if (!em) return null;
+                  return (
+                    <div key={it.post.id}
+                      onClick={() => setPopup(popup === it.post.id ? null : it.post.id)}
+                      style={{
+                        position:"absolute",
+                        left:`calc(${it.pct}% - 12px)`,
+                        top: it.row * 30,
+                        fontSize:22, cursor:"pointer",
+                        transition:"transform 0.15s",
+                        transform: popup === it.post.id ? "scale(1.3)" : "scale(1)",
+                        zIndex: popup === it.post.id ? 5 : 1,
+                        filter: `drop-shadow(0 1px 2px ${em.color}88)`,
+                      }}
+                      title={`${it.post.time} ${em.label}`}
+                    >
+                      {em.emoji}
+                      {/* ポップアップ */}
+                      {popup === it.post.id && (
+                        <div onClick={e => e.stopPropagation()} style={{
+                          position:"absolute", bottom:"110%", left:"50%", transform:"translateX(-50%)",
+                          background:"#333", color:"#fff", borderRadius:10, padding:"8px 12px",
+                          fontSize:11, whiteSpace:"nowrap", zIndex:20,
+                          boxShadow:"0 4px 16px rgba(0,0,0,0.25)",
+                          animation:"fadeIn 0.15s ease",
+                        }}>
+                          <div style={{ fontWeight:700, marginBottom:2 }}>{em.emoji} {em.label}</div>
+                          <div>{it.post.time}</div>
+                          {it.post.mode && <div style={{ color:"#aaa" }}>{it.post.mode}{it.post.modeElapsed != null ? ` ${fmtElapsed(it.post.modeElapsed)}` : ""}</div>}
+                          <div style={{
+                            position:"absolute", top:"100%", left:"50%", transform:"translateX(-50%)",
+                            width:0, height:0, borderLeft:"6px solid transparent",
+                            borderRight:"6px solid transparent", borderTop:"6px solid #333",
+                          }} />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              {/* 横バー */}
+              <div style={{
+                height:6, background:"linear-gradient(90deg, #e8e0f5, #f5e0f0)",
+                borderRadius:3, position:"relative",
+              }}>
+                {/* 6時間ごとの目盛り線 */}
+                {[6,12,18].map(h => (
+                  <div key={h} style={{
+                    position:"absolute", left:`${(h/24)*100}%`, top:-2,
+                    width:1, height:10, background:"#d0c0e0",
+                  }} />
+                ))}
+              </div>
+              {/* 時刻ラベル */}
+              <div style={{ display:"flex", justifyContent:"space-between", marginTop:3 }}>
+                <span style={{ fontSize:10, color:"#bbb" }}>0時</span>
+                <span style={{ fontSize:10, color:"#bbb" }}>6</span>
+                <span style={{ fontSize:10, color:"#bbb" }}>12</span>
+                <span style={{ fontSize:10, color:"#bbb" }}>18</span>
+                <span style={{ fontSize:10, color:"#bbb" }}>24時</span>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
   );
 };
 
@@ -197,55 +357,7 @@ window.EmotionSNSScreen = function EmotionSNSScreen({ onBack }) {
 
       {/* 集計 */}
       {tab === "stats" && (
-        <div style={{ flex:1, overflowY:"auto", padding:"16px 16px", display:"flex", flexDirection:"column", gap:12 }}>
-          <div style={{ fontSize:12, color:"#aaa", marginBottom:4 }}>全期間の感情投稿数</div>
-          {stats.map(s => (
-            <div key={s.id} style={{
-              background:"white", borderRadius:14, padding:"12px 16px",
-              boxShadow:"0 2px 8px rgba(180,140,255,0.1)", border:`2px solid ${s.color}44`,
-            }}>
-              <div style={{ display:"flex", justifyContent:"space-between", marginBottom:6 }}>
-                <span style={{ fontSize:13, fontWeight:700 }}>{s.emoji} {s.label}</span>
-                <span style={{ fontSize:13, color:"#888" }}>{s.count}回</span>
-              </div>
-              <div style={{ background:"#f5f0ff", borderRadius:6, height:8, overflow:"hidden" }}>
-                <div style={{
-                  width:`${(s.count / maxCount) * 100}%`, height:"100%",
-                  background:s.color, borderRadius:6, transition:"width 0.6s ease",
-                }} />
-              </div>
-            </div>
-          ))}
-          <div style={{ fontSize:12, color:"#aaa", marginTop:8, marginBottom:4 }}>モード別の感情投稿数</div>
-          {MODES.map(mode => {
-            const modePosts = posts.filter(p => p.mode === mode.label);
-            if (modePosts.length === 0) return null;
-            return (
-              <div key={mode.id} style={{
-                background:"white", borderRadius:14, padding:"12px 16px",
-                boxShadow:"0 2px 8px rgba(180,140,255,0.1)",
-              }}>
-                <div style={{ fontSize:13, fontWeight:700, marginBottom:8 }}>
-                  {mode.character} {mode.label}（{modePosts.length}件）
-                </div>
-                <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
-                  {EMOTIONS.map(e => {
-                    const cnt = modePosts.filter(p => p.emotionId === e.id).length;
-                    if (!cnt) return null;
-                    return (
-                      <div key={e.id} style={{
-                        background:`${e.color}44`, borderRadius:20,
-                        padding:"4px 10px", fontSize:11, fontWeight:700,
-                      }}>
-                        {e.emoji} {e.label} {cnt}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        <TimelineStats posts={posts} />
       )}
     </div>
   );
