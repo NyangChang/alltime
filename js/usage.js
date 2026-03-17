@@ -103,8 +103,14 @@ window.TodayUsageScreen = function TodayUsageScreen({ todayUsage, onBack }) {
 // ─── 今までの使用量画面 ──────────────────────────────
 window.HistoryUsageScreen = function HistoryUsageScreen({ history, onBack }) {
   const allDays = [...history].reverse();
+  // popup state: { date, itemId } or null
+  const [popup, setPopup] = React.useState(null);
+
+  // 背景タップでポップアップを閉じる
+  const handleBgClick = () => { if (popup) setPopup(null); };
+
   return (
-    <div style={{ minHeight:"100vh", background:"linear-gradient(160deg,#e8f4ff 0%,#f0e8ff 100%)", fontFamily:"'Hiragino Maru Gothic Pro',sans-serif", maxWidth:400, margin:"0 auto" }}>
+    <div onClick={handleBgClick} style={{ minHeight:"100vh", background:"linear-gradient(160deg,#e8f4ff 0%,#f0e8ff 100%)", fontFamily:"'Hiragino Maru Gothic Pro',sans-serif", maxWidth:400, margin:"0 auto" }}>
       <div style={{ padding:"16px 16px 12px", background:"rgba(255,255,255,0.75)", backdropFilter:"blur(10px)", borderBottom:"1px solid rgba(200,200,255,0.3)", display:"flex", alignItems:"center", gap:12, position:"sticky", top:0, zIndex:10 }}>
         <button onClick={onBack} style={{ background:"linear-gradient(135deg,#ffb3c8,#ff9eb5)", border:"none", borderRadius:20, padding:"6px 14px", fontSize:12, fontWeight:700, color:"white", cursor:"pointer" }}>🏠 戻る</button>
         <div style={{ fontSize:16, fontWeight:800, color:"#5566cc" }}>📈 今までの使用量</div>
@@ -127,6 +133,7 @@ window.HistoryUsageScreen = function HistoryUsageScreen({ history, onBack }) {
         )}
         {allDays.map(d => {
           const total = TRACK_ITEMS.reduce((s, t) => s + (d[t.id] || 0), 0);
+          const isActive = popup && popup.date === d.date;
           return (
             <div key={d.date} style={{ background:"white", borderRadius:16, padding:"12px 16px", boxShadow:"0 2px 10px rgba(140,160,255,0.1)", border:"2px solid rgba(220,230,255,0.5)" }}>
               <div style={{ display:"flex", justifyContent:"space-between", marginBottom:8 }}>
@@ -134,12 +141,65 @@ window.HistoryUsageScreen = function HistoryUsageScreen({ history, onBack }) {
                 <span style={{ fontSize:12, color:"#aaa" }}>合計 {fmtSec(total)}</span>
               </div>
               {total > 0 ? (
-                <div style={{ display:"flex", height:18, borderRadius:8, overflow:"hidden" }}>
-                  {TRACK_ITEMS.map(t => {
-                    const pct = (d[t.id] || 0) / total * 100;
-                    if (pct < 0.5) return null;
-                    return <div key={t.id} title={`${t.label}: ${fmtSec(d[t.id]||0)}`} style={{ width:`${pct}%`, background:t.color }} />;
-                  })}
+                <div style={{ position:"relative" }}>
+                  <div style={{ display:"flex", height:18, borderRadius:8, overflow:"hidden" }}>
+                    {TRACK_ITEMS.map(t => {
+                      const sec = d[t.id] || 0;
+                      const pct = sec / total * 100;
+                      if (pct < 0.5) return null;
+                      const selected = isActive && popup.itemId === t.id;
+                      return (
+                        <div key={t.id}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (selected) { setPopup(null); }
+                            else { setPopup({ date: d.date, itemId: t.id }); }
+                          }}
+                          style={{
+                            width:`${pct}%`, background:t.color, cursor:"pointer",
+                            opacity: isActive && !selected ? 0.5 : 1,
+                            transition:"opacity 0.15s",
+                          }}
+                        />
+                      );
+                    })}
+                  </div>
+                  {/* ポップアップ */}
+                  {isActive && (() => {
+                    const item = TRACK_ITEMS.find(t => t.id === popup.itemId);
+                    if (!item) return null;
+                    const sec = d[item.id] || 0;
+                    // ポップアップの水平位置を帯の中央に合わせる
+                    let leftPct = 0;
+                    for (const t of TRACK_ITEMS) {
+                      const tSec = d[t.id] || 0;
+                      const tPct = tSec / total * 100;
+                      if (tPct < 0.5) continue;
+                      if (t.id === item.id) { leftPct += tPct / 2; break; }
+                      leftPct += tPct;
+                    }
+                    return (
+                      <div onClick={e => e.stopPropagation()} style={{
+                        position:"absolute", bottom:"calc(100% + 8px)",
+                        left:`${leftPct}%`, transform:"translateX(-50%)",
+                        background:"#333", color:"#fff", borderRadius:10,
+                        padding:"7px 14px", fontSize:12, fontWeight:700,
+                        whiteSpace:"nowrap", zIndex:20,
+                        boxShadow:"0 4px 16px rgba(0,0,0,0.25)",
+                        animation:"fadeIn 0.15s ease",
+                      }}>
+                        <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+                          <div style={{ width:8, height:8, borderRadius:2, background:item.color, flexShrink:0 }} />
+                          <span>{item.label}：{fmtSec(sec)}</span>
+                        </div>
+                        <div style={{
+                          position:"absolute", top:"100%", left:"50%", transform:"translateX(-50%)",
+                          width:0, height:0, borderLeft:"6px solid transparent",
+                          borderRight:"6px solid transparent", borderTop:"6px solid #333",
+                        }} />
+                      </div>
+                    );
+                  })()}
                 </div>
               ) : (
                 <div style={{ height:18, background:"#f5f5f5", borderRadius:8 }} />
