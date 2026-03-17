@@ -348,6 +348,9 @@ window.PomodoroScreen = function PomodoroScreen({ onBack, onStop, addUsage, onOp
       btnContinue.removeEventListener('click', onBtnContinue);
       btnRest.removeEventListener('click', onBtnRest);
       btnShindoi.removeEventListener('click', onShindoiTap);
+      // 画面離脱時はタイマーを一時停止状態で保存する
+      // （loadState が「走行中だった時間」を workTotal に加算するのを防ぐ）
+      isPaused = true;
       saveState();
     };
 
