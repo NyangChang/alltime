@@ -13,10 +13,16 @@ function App() {
   const addUsage = React.useCallback((id, seconds) => {
     if (seconds <= 0) return;
     setTodayUsage(prev => {
-      const updated = { ...prev, [id]: (prev[id] || 0) + seconds };
+      // 日付が変わっていたら前日分を確定し、当日分をリセット
+      const today = todayStr();
+      let base = prev;
+      if (prev.date && prev.date !== today) {
+        flushTodayToHistory(prev);
+        base = { date: today, sns:0, firefox:0, study:0, chill:0, commute:0, sleep:0, exercise:0, interval:0 };
+      }
+      const updated = { ...base, [id]: (base[id] || 0) + seconds };
       saveTodayUsage(updated);
       flushTodayToHistory(updated);
-      // flushの直後にhistoryを読み込むことでレースコンディションを回避
       setHistory(loadHistory());
       return updated;
     });
