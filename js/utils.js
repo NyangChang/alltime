@@ -8,6 +8,7 @@ window.MODES = [
   { id: "chill",   label: "チルタイム", color: "#f0d6f5", character: "🍃", screen: "timer" },
   { id: "commute", label: "移動中",     color: "#fff3b0", character: "🚕", screen: "timer" },
   { id: "sleep",   label: "睡眠",       color: "#d9d6f5", character: "😴", screen: "timer" },
+  { id: "exercise", label: "運動",     color: "#a0e8d0", character: "🏃‍♀️", screen: "timer" },
 ];
 window.TRACK_ITEMS = [
   { id: "sns",      label: "SNS",         color: "#5abf7a" },
@@ -16,6 +17,7 @@ window.TRACK_ITEMS = [
   { id: "chill",    label: "チルタイム",  color: "#c88ae0" },
   { id: "commute",  label: "移動中",      color: "#f5d060" },
   { id: "sleep",    label: "睡眠",        color: "#9090d8" },
+  { id: "exercise", label: "運動",          color: "#50c8a0" },
   { id: "interval", label: "インターバル", color: "#b0c8e8" },
 ];
 window.EMOTIONS = [
@@ -44,9 +46,9 @@ window.todayStr = () => new Date().toLocaleDateString("ja-JP", { year:"numeric",
 window.loadTodayUsage = function() {
   try {
     const raw = JSON.parse(localStorage.getItem(USAGE_TODAY_KEY) || "{}");
-    if (raw.date !== todayStr()) return { date: todayStr(), sns:0, firefox:0, study:0, chill:0, commute:0, sleep:0, interval:0 };
+    if (raw.date !== todayStr()) return { date: todayStr(), sns:0, firefox:0, study:0, chill:0, commute:0, sleep:0, exercise:0, interval:0 };
     return raw;
-  } catch(e) { return { date: todayStr(), sns:0, firefox:0, study:0, chill:0, commute:0, sleep:0, interval:0 }; }
+  } catch(e) { return { date: todayStr(), sns:0, firefox:0, study:0, chill:0, commute:0, sleep:0, exercise:0, interval:0 }; }
 };
 window.saveTodayUsage = function(data) {
   localStorage.setItem(USAGE_TODAY_KEY, JSON.stringify({ ...data, date: todayStr() }));
