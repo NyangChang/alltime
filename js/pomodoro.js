@@ -24,6 +24,7 @@ window.PomodoroScreen = function PomodoroScreen({ onBack, onStop, addUsage, onOp
     let phaseStartTime = null;
     let pausedAccum = 0;
     let pauseStartTime = null;
+    let currentDate = todayStr();  // 日付変更検知用
 
     let shindoiCount = 0;
     let explosionCount = 0;
@@ -81,18 +82,43 @@ window.PomodoroScreen = function PomodoroScreen({ onBack, onStop, addUsage, onOp
 
     function saveApomoHistory() {
       const hist = JSON.parse(localStorage.getItem(HISTORY_KEY) || '{}');
-      hist[todayStr()] = workTotal;
+      hist[currentDate] = workTotal;
       localStorage.setItem(HISTORY_KEY, JSON.stringify(hist));
+    }
+    // 日付が変わったら前日分を確定し、当日の workTotal をリセットする
+    function checkDateRollover() {
+      const now = todayStr();
+      if (now === currentDate) return;
+      // 前日分を確定保存
+      saveApomoHistory();
+      // 当日分をリセット
+      currentDate = now;
+      workTotal = 0;
+      workTotalRef.current = 0;
+      workTotalAtStartRef.current = 0;
+      if (pomodoroTimeRef) pomodoroTimeRef.current = 0;
+      saveApomoHistory();
+      saveState();
     }
     function saveState() {
       localStorage.setItem(STATE_KEY, JSON.stringify({ phase, elapsed, workTotal, isPaused, savedAt: Date.now(), savedDate: todayStr() }));
     }
     function loadState() {
       const today = todayStr();
+      currentDate = today;
       const hist = JSON.parse(localStorage.getItem(HISTORY_KEY) || '{}');
       let s;
       try { s = JSON.parse(localStorage.getItem(STATE_KEY) || 'null'); } catch(e) { s = null; }
-      if (!s || s.savedDate !== today) { workTotal = hist[today] || 0; return; }
+      if (!s || s.savedDate !== today) {
+        // 前日以前の保存 → 前日分を確定し、当日はhistoryから読む
+        if (s && s.savedDate && s.savedDate !== today) {
+          const prevHist = JSON.parse(localStorage.getItem(HISTORY_KEY) || '{}');
+          prevHist[s.savedDate] = s.workTotal;
+          localStorage.setItem(HISTORY_KEY, JSON.stringify(prevHist));
+        }
+        workTotal = hist[today] || 0;
+        return;
+      }
       workTotal = s.workTotal;
       isPaused = s.isPaused;
       phase = s.phase;
@@ -228,6 +254,7 @@ window.PomodoroScreen = function PomodoroScreen({ onBack, onStop, addUsage, onOp
 
     function tick() {
       if (isPaused) return;
+      checkDateRollover();
       elapsed++;
       if (phase === 'idling') { workTotal++; if (elapsed >= IDLING_SEC) { saveApomoHistory(); saveState(); showChoice(); return; } }
       else if (phase === 'working') { workTotal++; }
@@ -348,6 +375,8 @@ window.PomodoroScreen = function PomodoroScreen({ onBack, onStop, addUsage, onOp
       btnContinue.removeEventListener('click', onBtnContinue);
       btnRest.removeEventListener('click', onBtnRest);
       btnShindoi.removeEventListener('click', onShindoiTap);
+      // 日付をまたいでいた場合、前日分を確定し当日分をリセット
+      checkDateRollover();
       // 画面離脱時はタイマーを一時停止状態で保存する
       // （loadState が「走行中だった時間」を workTotal に加算するのを防ぐ）
       isPaused = true;
