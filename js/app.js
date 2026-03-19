@@ -46,6 +46,17 @@ function App() {
     setHomeStartTime(Date.now());
     setActiveMode(null);
     setActiveModeStart(null);
+    // 日付が変わっていたら前日分を確定してリセット
+    setTodayUsage(prev => {
+      const today = todayStr();
+      if (prev.date && prev.date !== today) {
+        flushTodayToHistory(prev);
+        const fresh = loadTodayUsage();
+        setHistory(loadHistory());
+        return fresh;
+      }
+      return prev;
+    });
     setScreen(null);
   };
 
